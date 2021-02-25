@@ -8,7 +8,7 @@ The binary releases correspond with official Chromium releases and branches as s
 
 ## 💡 Things to know
 * All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) without any modifications to the sources code or to the output binaries.
-* Static framework (xcframework format) which contains binaries for both arm64 and x68_x64.
+* Dynamic framework (xcframework format) which contains binaries for both arm64 and x68_x64.
 * 32-bit binaries are not included.
 * Bitcode is included and this is the reason for the larger file size.
 
@@ -24,7 +24,15 @@ Xcode has a built-in support for Swift package manager. You can easily add the p
 Or, you can add the following dependency to your `Package.swift` file:
 ```swift
 dependencies: [
-    .Package(url: "https://github.com/stasel/WebRTC.git", .exact("88"))
+    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("88.0.0"))
+]
+```
+
+Use the `latest` branch to get the most up to date binary:
+
+```swift
+dependencies: [
+    .Package(url: "https://github.com/stasel/WebRTC.git", .branch("lastest"))
 ]
 ```
 
