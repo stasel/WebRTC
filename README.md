@@ -41,6 +41,12 @@ dependencies: [
 2. Unzip the file.
 3. Add the xcframework to your target(s) embedded frameworks.
 
+### Cocoapods
+Coming soon
+
+### Carthage
+Coming soon
+
 ## 👷 Usage
 To import WebRTC to your code add the following import statement
 ```swift
