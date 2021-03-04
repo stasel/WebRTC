@@ -32,7 +32,7 @@ Use the `latest` branch to get the most up to date binary:
 
 ```swift
 dependencies: [
-    .Package(url: "https://github.com/stasel/WebRTC.git", .branch("lastest"))
+    .Package(url: "https://github.com/stasel/WebRTC.git", .branch("latest"))
 ]
 ```
 
