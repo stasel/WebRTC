@@ -9,12 +9,11 @@ The binary releases correspond with official Chromium releases and branches as s
 ## 💡 Things to know
 * All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) without any modifications to the sources code or to the output binaries.
 * Dynamic framework (xcframework format) which contains binaries for both arm64 and x68_x64.
-* 32-bit binaries are not included.
 * Bitcode is included and this is the reason for the larger file size.
+* Supports both 32 bit and 64 bit.
 
 ## 📢 Requirements
 * iOS 10+
-* 64 bit device or simulator
 
 ## 🚚 Installation
 
@@ -24,7 +23,7 @@ Xcode has a built-in support for Swift package manager. You can easily add the p
 Or, you can add the following dependency to your `Package.swift` file:
 ```swift
 dependencies: [
-    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("89.0.0"))
+    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("90.0.0"))
 ]
 ```
 
@@ -53,12 +52,14 @@ To import WebRTC to your code add the following import statement
 import WebRTC
 ```
 
-If you wish to see how to use WebRTC I highly recommend checking our my WebRTC demo iOS app: https://github.com/stasel/WebRTC-iOS
+If you wish to see how to use WebRTC I highly recommend checking out my WebRTC demo iOS app: https://github.com/stasel/WebRTC-iOS
 
 
 ## 🛠 Compile your own WebRTC Frameworks
 If you wish to compile your own WebRTC binary framework, please refer to the following official guide:
 https://webrtc.googlesource.com/src/+/refs/heads/master/docs/native-code/ios/index.md
+
+You can also take a look at the [build script](scripts/build.sh) I created for more details.
 
 ## 📃 License
 * BSD 3-Clause License

@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "WebRTC-lib"
-  spec.version      = "89.0.0"
+  spec.version      = "90.0.0"
   spec.summary      = "Unofficial distribution of WebRTC framework binaries for iOS. "
   spec.description  = <<-DESC
   This pod contains unofficial distribution of WebRTC framework binaries for iOS.
@@ -13,9 +13,7 @@ Pod::Spec.new do |spec|
   spec.author       = "Stasel"
   spec.platform     = :ios, "10.0"
 
-  spec.source       = { :http => "https://github.com/stasel/WebRTC/releases/download/89.0.0/WebRTC-M89.xcframework.zip" }
+  spec.source       = { :http => "https://github.com/stasel/WebRTC/releases/download/90.0.0/WebRTC-M90.xcframework.zip" }
   spec.vendored_frameworks = "WebRTC.xcframework"
-
-  # spec.pod_target_xcconfig = { "ARCHS" => "$(ARCHS_STANDARD_64_BIT)" }
-
+  
 end
