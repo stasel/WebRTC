@@ -8,7 +8,7 @@ The binary releases correspond with official Chromium releases and branches as s
 
 ## 💡 Things to know
 * All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) without any modifications to the sources code or to the output binaries.
-* Dynamic framework (xcframework format) which contains binaries for both arm64 and x68_x64.
+* Dynamic framework (xcframework format) which contains binaries for armv7, arm64, x86 and x86_x64.
 * Bitcode is included and this is the reason for the larger file size.
 * Supports both 32 bit and 64 bit.
 
