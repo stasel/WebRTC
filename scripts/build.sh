@@ -38,12 +38,14 @@ build_macOS() {
     ninja -C "${gen_dir}" mac_framework_objc
 }
 
+# Catalyst builds are not working properly yet. 
+# See: https://groups.google.com/g/discuss-webrtc/c/VZXS4V4mSY4
 build_catalyst() {
     local arch=$1
     local gen_dir="${OUTPUT_DIR}/catalyst-${arch}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"mac\""
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"13.0\" ios_enable_code_signing=false use_xcode_clang=true treat_warnings_as_errors=false"
     gn gen "${gen_dir}" --args="${gen_args}"
-    ninja -C "${gen_dir}" mac_framework_objc
+    ninja -C "${gen_dir}" framework_objc
 }
 
 plist_add_library() {
