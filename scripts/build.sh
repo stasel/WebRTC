@@ -200,7 +200,6 @@ zip -r $OUTPUT_NAME WebRTC.xcframework/
 CHECKSUM=$(shasum -a 256 $OUTPUT_NAME | awk '{ print $1 }')
 COMMIT_HASH=$(git rev-parse HEAD)
 
-echo "${OUTPUT_NAME}" > metadata.txt
-echo "SHA256 checksum: ${CHECKSUM}" >> metadata.txt
-echo "Commit hash: ${COMMIT_HASH}" >> metadata.txt
-cat metadata.txt
+echo "{ \"file\": \"${OUTPUT_NAME}\", \"checksum\": \"${CHECKSUM}\", \"commit\": \"${COMMIT_HASH}\", \"branch\": \"${BRANCH}\" }" > metadata.json
+cat metadata.json
+
