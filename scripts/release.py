@@ -39,6 +39,7 @@ def getNextRelease():
     return NextReleaseResult(version = nextReleaseVersion, releaseDate = nextReleaseDate, branch = nextReleaseBranch)
 
 def isReleaseAvailable(release):
+    return True
     return datetime.today() > (release.releaseDate + timedelta(days=1))
 
 def buildWebRTC(branch):
