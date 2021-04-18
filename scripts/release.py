@@ -3,8 +3,11 @@ import json
 import requests
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+import telegram
 
 GITHUB_TOKEN=os.environ.get("GITHUB_TOKEN")
+TELEGRAM_TOKEN=os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID=os.environ.get("TELEGRAM_CHAT_ID")
 
 @dataclass
 class NextReleaseResult:
@@ -24,13 +27,13 @@ def getNextRelease():
     releases = requests.get("https://api.github.com/repos/stasel/WebRTC/releases").json()
     latestReleaseVersion = int(releases[0]["name"][1:])
     latestReleaseDate = datetime.fromisoformat(releases[0]["published_at"].replace("Z", ""))
-    print(f"Latest release:\t version {latestReleaseVersion}, date: {latestReleaseDate}")
+    print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
 
     # Get next version
     nextReleaseVersion = latestReleaseVersion + 1
     milestones = requests.get(f"https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone={nextReleaseVersion}").json()
     nextReleaseDate = datetime.fromisoformat(milestones["mstones"][0]["stable_date"])
-    print(f"Next release:\t version {nextReleaseVersion}, date: {nextReleaseDate}")
+    print(f"Next release:   version {nextReleaseVersion}, date: {nextReleaseDate}")
 
     # Get next version branch
     releases = requests.get(f"https://chromiumdash.appspot.com/fetch_milestones?mstone={nextReleaseVersion}").json()
@@ -39,7 +42,6 @@ def getNextRelease():
     return NextReleaseResult(version = nextReleaseVersion, releaseDate = nextReleaseDate, branch = nextReleaseBranch)
 
 def isReleaseAvailable(release):
-    return True
     return datetime.today() > (release.releaseDate + timedelta(days=1))
 
 def buildWebRTC(branch):
@@ -103,13 +105,13 @@ if not GITHUB_TOKEN:
 # Get next release details
 print("➡️ Fetching next release...")
 nextRelease = getNextRelease()
-print(f"✅ {nextRelease}\n")
 
 # Check if it is time for a new reelease
 if not isReleaseAvailable(nextRelease):
     print("ℹ️  Next version is not out yet. Skipping build")
     os._exit(os.EX_OK)
 
+print(f"✅ {nextRelease}\n")
 print("✅ New Version is available to build")
 
 # Build WebRTC Frameworks
@@ -175,5 +177,12 @@ prResult = createPullRequest(nextRelease, releaseBranch)
 if not prResult:
     print("❌ Failed creating pull request in github")
     os._exit(os.EX_SOFTWARE)
+
+# Notify about the new release via Telegram bot
+if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+    print("➡️ Sending Telegram notification...")
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    message = f"New WebRTC Release M{nextRelease.version} is now available.\nCheck the PR here: https://github.com/stasel/WebRTC/pulls"
+    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text="hello from python")
 
 print(f"✅ Done")
