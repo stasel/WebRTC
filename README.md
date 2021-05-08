@@ -35,15 +35,27 @@ dependencies: [
 ]
 ```
 
+### Carthage
+**Requires Carthage version 0.38 or higher**
+
+Add the following dependency to the `Cartfile` in your project:
+```
+binary "https://raw.githubusercontent.com/stasel/WebRTC/latest/WebRTC.json"
+```
+Then update the dependencies using the following command:
+```
+carthage update --use-xcframeworks
+```
+And finally, add the xcframework located in `./Carthage/Build/WebRTC.xcframework` to your target(s) embedded frameworks.
+
+Read more about Carthage in its [Github repo](https://github.com/Carthage/Carthage).
+
 ### Manual
 1. Download the framework from the [releases](https://github.com/stasel/WebRTC/releases) section.
 2. Unzip the file.
 3. Add the xcframework to your target(s) embedded frameworks.
 
 ### Cocoapods
-Coming soon
-
-### Carthage
 Coming soon
 
 ## 👷 Usage
