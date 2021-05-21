@@ -50,6 +50,8 @@ def buildWebRTC(branch):
     os.environ["BRANCH"] = branch
     os.environ["IOS_32_BIT"] = "true"
     os.environ["IOS_64_BIT"] = "true"
+    os.environ["MACOS"] = "true"
+
     return os.system('sh scripts/build.sh') == 0
 
 def getBuildMetadata(outputDir):
