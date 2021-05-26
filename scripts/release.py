@@ -185,6 +185,6 @@ if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
     print("➡️ Sending Telegram notification...")
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     message = f"New WebRTC Release M{nextRelease.version} is now available.\nCheck the PR here: https://github.com/stasel/WebRTC/pulls"
-    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text="hello from python")
+    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
 
 print(f"✅ Done")
