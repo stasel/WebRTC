@@ -56,7 +56,7 @@ def buildWebRTC(branch):
 
 def getBuildMetadata(outputDir):
     with open(f"{outputDir}/metadata.json", 'r') as f:
-        jsonData = json.loads(lgf.read())
+        jsonData = json.loads(f.read())
         return BuildMetadata(filename = jsonData['file'], checksum = jsonData['checksum'], commit = jsonData['commit'], branch = jsonData['branch'])
 
 def createReleaseDraft(release, buildMetadata):
