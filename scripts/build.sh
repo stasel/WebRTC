@@ -174,8 +174,8 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -r out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/macos"
-    lipo -create -output "${XCFRAMEWORK_DIR}/macos/WebRTC.framework/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
+    cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/macos"
+    lipo -create -output "${XCFRAMEWORK_DIR}/macos/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
