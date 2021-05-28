@@ -27,7 +27,7 @@ build_iOS() {
     local gen_dir="${OUTPUT_DIR}/ios-${arch}-${environment}"
     local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" enable_ios_bitcode=${BITCODE} target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"10.0\" ios_enable_code_signing=false use_xcode_clang=true"
     gn gen "${gen_dir}" --args="${gen_args}"
-    ninja -C "${gen_dir}" framework_objc
+    ninja -C "${gen_dir}" framework_objc || exit 1
 }
 
 build_macOS() {
@@ -194,7 +194,7 @@ fi
 cd out
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
-zip -r $OUTPUT_NAME WebRTC.xcframework/
+zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/
 
 # Step 7 calculate SHA256 checksum
 CHECKSUM=$(shasum -a 256 $OUTPUT_NAME | awk '{ print $1 }')
