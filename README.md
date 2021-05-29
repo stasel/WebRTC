@@ -1,4 +1,8 @@
 # WebRTC Binaries for iOS
+![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)
+![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)
+![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)
+
 This repository contains unofficial distribution of WebRTC framework binaries for iOS.
 
 Since version M80, Google has [deprecated](https://groups.google.com/g/discuss-webrtc/c/Ozvbd0p7Q1Y/m/M4WN2cRKCwAJ?pli=1) their mobile binary libraries distributions (Was officially using the [GoogleWebRTC pod](https://cocoapods.org/pods/GoogleWebRTC)). To get the most up to date WebRTC library, you can compile it on your own, or you can use precompiled binaries from other sources.
