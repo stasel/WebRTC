@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "WebRTC-lib"
-  spec.version      = "90.0.0"
+  spec.version      = "92.0.0"
   spec.summary      = "Unofficial distribution of WebRTC framework binaries for iOS. "
   spec.description  = <<-DESC
   This pod contains unofficial distribution of WebRTC framework binaries for iOS.
