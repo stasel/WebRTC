@@ -81,9 +81,10 @@ export PATH=$(pwd)/depot_tools:$PATH
 
 # Step 2 - Download and build WebRTC
 if [ ! -d src ]; then
-	fetch --nohooks webrtc_ios
+    fetch --nohooks webrtc_ios
 fi
 cd src
+git fetch --all
 git checkout $BRANCH
 cd ..
 gclient sync --with_branch_heads --with_tags
