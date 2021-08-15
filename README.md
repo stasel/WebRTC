@@ -2,6 +2,8 @@
 [![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
 [![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
 [![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)](https://github.com/stasel/WebRTC/releases)
+[![Cocoapods](https://img.shields.io/cocoapods/v/WebRTC-lib)](https://cocoapods.org/pods/WebRTC-lib)
+
 
 This repository contains unofficial distribution of WebRTC framework binaries for iOS and macOS.
 
@@ -48,6 +50,18 @@ dependencies: [
 ]
 ```
 
+### Cocoapods
+Add the following line to your `Podfile`:
+```
+pod 'WebRTC-lib'
+```
+
+And then run 
+```
+pod install
+````
+Read more about Cocoapods: https://cocoapods.org
+
 ### Carthage
 **Requires Carthage version 0.38 or higher**
 
@@ -61,15 +75,13 @@ carthage update --use-xcframeworks
 ```
 And finally, add the xcframework located in `./Carthage/Build/WebRTC.xcframework` to your target(s) embedded frameworks.
 
-Read more about Carthage in its [Github repo](https://github.com/Carthage/Carthage).
+Read more about Carthage: https://github.com/Carthage/Carthage
 
 ### Manual
 1. Download the framework from the [releases](https://github.com/stasel/WebRTC/releases) section.
 2. Unzip the file.
 3. Add the xcframework to your target(s) embedded frameworks.
 
-### Cocoapods
-Coming soon
 
 ## 👷 Usage
 To import WebRTC to your code add the following import statement
