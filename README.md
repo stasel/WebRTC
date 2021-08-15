@@ -1,9 +1,9 @@
-# WebRTC Binaries for iOS
+# WebRTC Binaries for iOS and macOS
 ![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)
 ![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)
 ![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)
 
-This repository contains unofficial distribution of WebRTC framework binaries for iOS.
+This repository contains unofficial distribution of WebRTC framework binaries for iOS and macOS.
 
 Since version M80, Google has [deprecated](https://groups.google.com/g/discuss-webrtc/c/Ozvbd0p7Q1Y/m/M4WN2cRKCwAJ?pli=1) their mobile binary libraries distributions (Was officially using the [GoogleWebRTC pod](https://cocoapods.org/pods/GoogleWebRTC)). To get the most up to date WebRTC library, you can compile it on your own, or you can use precompiled binaries from other sources.
 
@@ -12,12 +12,21 @@ The binary releases correspond with official Chromium releases and branches as s
 
 ## 💡 Things to know
 * All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) without any modifications to the sources code or to the output binaries.
-* Dynamic framework (xcframework format) which contains binaries for armv7, arm64, x86 and x86_x64.
+* Dynamic framework (xcframework format) which contains multiple binaries for both macOS and iOS.
 * Bitcode is included and this is the reason for the larger file size.
-* Supports both 32 bit and 64 bit.
 
 ## 📢 Requirements
 * iOS 10+
+* macOS 10.11+
+
+## 📀 Binaries included
+| **Platform / arch** | armv7 | arm64 | x86 | x86_x64 |
+|---------------------|-------|-------|-----|---------|
+| **iOS (device)**    |   ✅   |   ✅   | N/A |   N/A   |
+| **iOS (simulator)** |  N/A  |   ✅   |  ✅  |    ✅    |
+| **macOS**           |  N/A  |   ✅   | N/A |    ✅    |
+
+*macOS Catalyst is not supported.*
 
 ## 🚚 Installation
 
