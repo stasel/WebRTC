@@ -130,19 +130,38 @@ mkdir "${XCFRAMEWORK_DIR}"
 # Step 5.1 - Add iOS libs to XCFramework
 LIB_COUNT=0
 if [[ "$IOS_32_BIT" = true || "$IOS_64_BIT" = true ]]; then
-    mkdir "${XCFRAMEWORK_DIR}/ios"
-    mkdir "${XCFRAMEWORK_DIR}/ios-simulator"
+
+    IOS_ARCHS=""
+    IOS_SIM_ARCHS=""
+    if [[ "$IOS_32_BIT" = true ]]; then 
+        IOS_ARCHS="armv7"
+        IOS_SIM_ARCHS="i386"
+    fi
+    if [[ "$IOS_32_BIT" = true && "$IOS_64_BIT" = true ]]; then 
+        IOS_ARCHS="${IOS_ARCHS}_"
+        IOS_SIM_ARCHS="${IOS_SIM_ARCHS}_"
+    fi
+    if [[ "$IOS_64_BIT" = true ]]; then 
+        IOS_ARCHS="${IOS_ARCHS}arm64"
+        IOS_SIM_ARCHS="${IOS_SIM_ARCHS}arm64_x86_64"
+    fi
+
+    IOS_LIB_IDENTIFIER="ios-${IOS_ARCHS}"
+    IOS_SIM_LIB_IDENTIFIER="ios-${IOS_SIM_ARCHS}-simulator"
+
+    mkdir "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    mkdir "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
     LIB_IOS_INDEX=0
     LIB_IOS_SIMULATOR_INDEX=1
-    plist_add_library $LIB_IOS_INDEX "ios" "ios"
-    plist_add_library $LIB_IOS_SIMULATOR_INDEX "ios-simulator" "ios" "simulator"
+    plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
+    plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
     if [ "$IOS_32_BIT" = true ]; then
-        cp -r out/ios-arm-device/WebRTC.framework "${XCFRAMEWORK_DIR}/ios"
-        cp -r out/ios-x86-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/ios-simulator"
+        cp -r out/ios-arm-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+        cp -r out/ios-x86-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
     elif [ "$IOS_64_BIT" = true ]; then
-        cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/ios"
-        cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/ios-simulator"
+        cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+        cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
     fi
 
     LIPO_IOS_FLAGS=""
@@ -162,21 +181,24 @@ if [[ "$IOS_32_BIT" = true || "$IOS_64_BIT" = true ]]; then
         plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "x86_64"
     fi
 
-    lipo -create -output  "${XCFRAMEWORK_DIR}/ios/WebRTC.framework/WebRTC" ${LIPO_IOS_FLAGS}
-    lipo -create -output "${XCFRAMEWORK_DIR}/ios-simulator/WebRTC.framework/WebRTC" ${LIPO_IOS_SIM_FLAGS}
+    lipo -create -output  "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_FLAGS}
+    lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_SIM_FLAGS}
 
     LIB_COUNT=$((LIB_COUNT+2))
 fi
 
 # Step 5.2 - Add macOS libs to XCFramework
 if [ "$MACOS" = true ]; then
-    mkdir "${XCFRAMEWORK_DIR}/macos"
-    plist_add_library $LIB_COUNT "macos" "macos"
+
+    MAC_LIB_IDENTIFIER="macos-x86_64_arm64"
+
+    mkdir "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+    plist_add_library $LIB_COUNT "${MAC_LIB_IDENTIFIER}" "macos"
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/macos"
-    lipo -create -output "${XCFRAMEWORK_DIR}/macos/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
+    cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -191,13 +213,16 @@ if [ "$MAC_CATALYST" = true ]; then
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
-# Step 6 - archive the framework
+# Step 6 - Add license file to the framework
+cp LICENSE ${XCFRAMEWORK_DIR}
+
+# Step 7 - archive the framework
 cd out
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
 zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/
 
-# Step 7 calculate SHA256 checksum
+# Step 8 calculate SHA256 checksum
 CHECKSUM=$(shasum -a 256 $OUTPUT_NAME | awk '{ print $1 }')
 COMMIT_HASH=$(git rev-parse HEAD)
 

@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
   DESC
 
   spec.homepage     = "https://github.com/stasel/WebRTC"
-  spec.license      = { :type => 'BSD' }
+  spec.license      = { :type => 'BSD', :file => 'WebRTC.xcframework/LICENSE' }
   spec.author       = "Stasel"
   spec.platform     = :ios, "10.0"
 
