@@ -1,7 +1,7 @@
 # WebRTC Binaries for iOS and macOS
-![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)
-![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)
-![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)
+[![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
+[![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
+[![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)](https://github.com/stasel/WebRTC/releases)
 
 This repository contains unofficial distribution of WebRTC framework binaries for iOS and macOS.
 
