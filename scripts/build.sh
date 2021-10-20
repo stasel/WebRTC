@@ -18,7 +18,7 @@ MAC_CATALYST="${MAC_CATALYST:-false}"
 
 OUTPUT_DIR="./out"
 XCFRAMEWORK_DIR="out/WebRTC.xcframework"
-COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false"
+COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=false enable_stripping=true enable_dsyms=false"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
 
 build_iOS() {
@@ -92,9 +92,11 @@ cd src
 
 # Step 2.5 - Apply patches (Temp)
 sed -i '' 's/-ffile-compilation-dir/-fdebug-compilation-dir/g' ./build/config/compiler/BUILD.gn
+sed -i '' 's/cflags += \[ "-gdwarf-aranges" \]/# cflags += \[ "-gdwarf-aranges" \]/g' ./build/config/compiler/BUILD.gn
+
 
 # Step 3 - Compile and build all frameworks
-rm -rf $OUTPUT_DIR
+rm -rf $OUTPUT_DIR  
 if [ "$IOS_32_BIT" = true ]; then
     build_iOS "x86" "simulator"
     build_iOS "arm" "device"
