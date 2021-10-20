@@ -48,11 +48,9 @@ def buildWebRTC(branch):
     os.environ["BITCODE"] = "true"
     os.environ["BUILD_VP9"] = "true"
     os.environ["BRANCH"] = branch
-    os.environ["IOS_32_BIT"] = "false"
-    os.environ["IOS_64_BIT"] = "true"
+    os.environ["IOS"] = "true"
     os.environ["MACOS"] = "true"
     os.environ["MAC_CATALYST"] = "true"
-
 
     return os.system('sh scripts/build.sh') == 0
 

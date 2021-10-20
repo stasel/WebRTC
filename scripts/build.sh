@@ -4,15 +4,14 @@
 ## Created by Stasel
 ## BSD-3 License
 ## 
-## Example usage: IOS_32_BIT=true IOS_64_BIT=true BUILD_VP9=true sh build.sh
+## Example usage: MACOS=true IOS=true BUILD_VP9=true sh build.sh
 
 # Configs
 DEBUG="${DEBUG:-false}"
 BITCODE="${BITCODE:-false}" 
 BUILD_VP9="${BUILD_VP9:-false}"
 BRANCH="${BRANCH:-master}"
-IOS_32_BIT="${IOS_32_BIT:-false}"
-IOS_64_BIT="${IOS_64_BIT:-false}"
+IOS="${IOS:-false}"
 MACOS="${MACOS:-false}"
 MAC_CATALYST="${MAC_CATALYST:-false}"
 
@@ -97,12 +96,8 @@ sed -i '' 's/cflags += \[ "-gdwarf-aranges" \]/# cflags += \[ "-gdwarf-aranges" 
 
 # Step 3 - Compile and build all frameworks
 rm -rf $OUTPUT_DIR  
-if [ "$IOS_32_BIT" = true ]; then
-    build_iOS "x86" "simulator"
-    build_iOS "arm" "device"
-fi
 
-if [ "$IOS_64_BIT" = true ]; then
+if [ "$IOS" = true ]; then
     build_iOS "x64" "simulator"
     build_iOS "arm64" "simulator"
     build_iOS "arm64" "device"
@@ -133,25 +128,10 @@ mkdir "${XCFRAMEWORK_DIR}"
 
 # Step 5.1 - Add iOS libs to XCFramework
 LIB_COUNT=0
-if [[ "$IOS_32_BIT" = true || "$IOS_64_BIT" = true ]]; then
+if [[ "$IOS" = true ]]; then
 
-    IOS_ARCHS=""
-    IOS_SIM_ARCHS=""
-    if [[ "$IOS_32_BIT" = true ]]; then 
-        IOS_ARCHS="armv7"
-        IOS_SIM_ARCHS="i386"
-    fi
-    if [[ "$IOS_32_BIT" = true && "$IOS_64_BIT" = true ]]; then 
-        IOS_ARCHS="${IOS_ARCHS}_"
-        IOS_SIM_ARCHS="${IOS_SIM_ARCHS}_"
-    fi
-    if [[ "$IOS_64_BIT" = true ]]; then 
-        IOS_ARCHS="${IOS_ARCHS}arm64"
-        IOS_SIM_ARCHS="${IOS_SIM_ARCHS}arm64_x86_64"
-    fi
-
-    IOS_LIB_IDENTIFIER="ios-${IOS_ARCHS}"
-    IOS_SIM_LIB_IDENTIFIER="ios-${IOS_SIM_ARCHS}-simulator"
+    IOS_LIB_IDENTIFIER="ios-arm64"
+    IOS_SIM_LIB_IDENTIFIER="ios-x86_64_arm64-simulator"
 
     mkdir "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
     mkdir "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
@@ -160,30 +140,15 @@ if [[ "$IOS_32_BIT" = true || "$IOS_64_BIT" = true ]]; then
     plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
     plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
-    if [ "$IOS_32_BIT" = true ]; then
-        cp -r out/ios-arm-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-        cp -r out/ios-x86-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
-    elif [ "$IOS_64_BIT" = true ]; then
-        cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-        cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
-    fi
+    cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
 
-    LIPO_IOS_FLAGS=""
-    LIPO_IOS_SIM_FLAGS=""
-    if [ "$IOS_32_BIT" = true ]; then
-        LIPO_IOS_FLAGS="out/ios-arm-device/WebRTC.framework/WebRTC"
-        LIPO_IOS_SIM_FLAGS="out/ios-x86-simulator/WebRTC.framework/WebRTC"
-        plist_add_architecture $LIB_IOS_INDEX "armv7"
-        plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "i386"
-    fi
+    LIPO_IOS_FLAGS="out/ios-arm64-device/WebRTC.framework/WebRTC"
+    LIPO_IOS_SIM_FLAGS="out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
 
-    if [ "$IOS_64_BIT" = true ]; then
-        LIPO_IOS_FLAGS="${LIPO_IOS_FLAGS} out/ios-arm64-device/WebRTC.framework/WebRTC"
-        LIPO_IOS_SIM_FLAGS="${LIPO_IOS_SIM_FLAGS} out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
-        plist_add_architecture $LIB_IOS_INDEX "arm64"
-        plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "arm64"
-        plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "x86_64"
-    fi
+    plist_add_architecture $LIB_IOS_INDEX "arm64"
+    plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "arm64"
+    plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "x86_64"
 
     lipo -create -output  "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_FLAGS}
     lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_SIM_FLAGS}
@@ -208,12 +173,16 @@ fi
 
 # Step 5.3 - macOS catalyst libs to XCFramework
 if [ "$MAC_CATALYST" = true ]; then
-    mkdir "${XCFRAMEWORK_DIR}/macos-catalyst"
-    plist_add_library $LIB_COUNT "macos-catalyst" "ios" "maccatalyst"
+
+    CATALYST_LIB_IDENTIFIER="ios-x86_64_arm64-maccatalyst"
+
+    mkdir "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    plist_add_library $LIB_COUNT "${CATALYST_LIB_IDENTIFIER}" "ios" "maccatalyst"
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
-    cp -r out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/macos-catalyst"
-    lipo -create -output "${XCFRAMEWORK_DIR}/macos-catalyst/WebRTC.framework/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
+
+    cp -RP out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
