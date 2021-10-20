@@ -7,7 +7,7 @@
 
 This repository contains unofficial distribution of WebRTC framework binaries for iOS and macOS.
 
-Since version M80, Google has [deprecated](https://groups.google.com/g/discuss-webrtc/c/Ozvbd0p7Q1Y/m/M4WN2cRKCwAJ?pli=1) their mobile binary libraries distributions (Was officially using the [GoogleWebRTC pod](https://cocoapods.org/pods/GoogleWebRTC)). To get the most up to date WebRTC library, you can compile it on your own, or you can use precompiled binaries from other sources.
+Since version M80, Google has [deprecated](https://groups.google.com/g/discuss-webrtc/c/Ozvbd0p7Q1Y/m/M4WN2cRKCwAJ?pli=1) their mobile binary libraries distributions (Was officially using the [GoogleWebRTC pod](https://cocoapods.org/pods/GoogleWebRTC)). To get the most up to date WebRTC library, you can compile it on your own, or you can use precompiled binaries from here or other sources.
 
 ## 📦 Releases
 The binary releases correspond with official Chromium releases and branches as specified in the [Chromium dashboard](https://chromiumdash.appspot.com/branches).
@@ -18,17 +18,19 @@ The binary releases correspond with official Chromium releases and branches as s
 * Bitcode is included and this is the reason for the larger file size.
 
 ## 📢 Requirements
-* iOS 10+
+* iOS 12+
 * macOS 10.11+
+* macOS Catalyst 11.0+
 
 ## 📀 Binaries included
-| **Platform / arch** | armv7 | arm64 | x86 | x86_x64 |
-|---------------------|-------|-------|-----|---------|
-| **iOS (device)**    |   ✅   |   ✅   | N/A |   N/A   |
-| **iOS (simulator)** |  N/A  |   ✅   |  ✅  |    ✅    |
-| **macOS**           |  N/A  |   ✅   | N/A |    ✅    |
+| **Platform / arch** | arm64  | x86_x64 |
+|---------------------|--------|---------|
+| **iOS (device)**    |   ✅   |   N/A   |
+| **iOS (simulator)** |   ✅   |    ✅   |
+| **macOS**           |   ✅   |    ✅   |
+| **macOS Catalyst**  |   ✅   |    ✅   | 
 
-*macOS Catalyst is not supported.*
+*Looking for 32 bit binaries? Please use [Version M94](https://github.com/stasel/WebRTC/releases/tag/94.0.0) or lower*
 
 ## 🚚 Installation
 
@@ -38,7 +40,7 @@ Xcode has a built-in support for Swift package manager. You can easily add the p
 Or, you can add the following dependency to your `Package.swift` file:
 ```swift
 dependencies: [
-    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("94.0.0"))
+    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("95.0.0"))
 ]
 ```
 
