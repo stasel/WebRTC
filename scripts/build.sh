@@ -25,7 +25,7 @@ build_iOS() {
     local arch=$1
     local environment=$2
     local gen_dir="${OUTPUT_DIR}/ios-${arch}-${environment}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" enable_ios_bitcode=${BITCODE} target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"10.0\" ios_enable_code_signing=false use_xcode_clang=true"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" enable_ios_bitcode=${BITCODE} target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"12.0\" ios_enable_code_signing=false use_xcode_clang=true"
     gn gen "${gen_dir}" --args="${gen_args}"
     ninja -C "${gen_dir}" framework_objc || exit 1
 }
