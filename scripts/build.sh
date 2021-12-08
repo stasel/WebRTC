@@ -92,7 +92,7 @@ cd src
 # Step 2.5 - Apply patches (Temp)
 sed -i '' 's/-ffile-compilation-dir/-fdebug-compilation-dir/g' ./build/config/compiler/BUILD.gn
 sed -i '' 's/cflags += \[ "-gdwarf-aranges" \]/# cflags += \[ "-gdwarf-aranges" \]/g' ./build/config/compiler/BUILD.gn
-
+sed -i '' 's/if (target_environment == "simulator" && current_cpu == "arm64")/if \(false\)/g' ./build/config/ios/BUILD.gn
 
 # Step 3 - Compile and build all frameworks
 rm -rf $OUTPUT_DIR  
