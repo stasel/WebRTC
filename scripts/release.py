@@ -30,7 +30,7 @@ def getNextRelease():
     print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
 
     # Get next version
-    nextReleaseVersion = latestReleaseVersion + 1
+    nextReleaseVersion = 102 # latestReleaseVersion + 1
     milestones = requests.get(f"https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone={nextReleaseVersion}").json()
     nextReleaseDate = datetime.fromisoformat(milestones["mstones"][0]["stable_date"])
     print(f"Next release:   version {nextReleaseVersion}, date: {nextReleaseDate}")
