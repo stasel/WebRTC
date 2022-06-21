@@ -13,9 +13,9 @@ Since version M80, Google has [deprecated](https://groups.google.com/g/discuss-w
 The binary releases correspond with official Chromium releases and branches as specified in the [Chromium dashboard](https://chromiumdash.appspot.com/branches).
 
 ## 💡 Things to know
-* All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) without any modifications to the sources code or to the output binaries.
-* Dynamic framework (xcframework format) which contains multiple binaries for both macOS and iOS.
-* Bitcode is included and this is the reason for the larger file size.
+* All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) without any modifications to the source code or to the output binaries.
+* Dynamic framework (xcframework format) which contains multiple binaries for macOS and iOS.
+* Since [Xcode 14](https://developer.apple.com/documentation/Xcode-Release-Notes/xcode-14-release-notes), bitcode is deprecated. Version M103 and above does not include bitcode.
 
 ## 📢 Requirements
 * iOS 12+
@@ -40,7 +40,7 @@ Xcode has a built-in support for Swift package manager. You can easily add the p
 Or, you can add the following dependency to your `Package.swift` file:
 ```swift
 dependencies: [
-    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("96.0.0"))
+    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("103.0.0"))
 ]
 ```
 
