@@ -42,7 +42,7 @@ def getNextRelease():
     return NextReleaseResult(version = nextReleaseVersion, releaseDate = nextReleaseDate, branch = nextReleaseBranch)
 
 def isReleaseAvailable(release):
-    return datetime.today() >= (release.releaseDate + timedelta(days=1))
+    return datetime.today() >= (release.releaseDate + timedelta(days=0))
 
 def buildWebRTC(branch):
     os.environ["BITCODE"] = "true"
