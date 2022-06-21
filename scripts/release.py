@@ -30,7 +30,7 @@ def getNextRelease():
     print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
 
     # Get next version
-    nextReleaseVersion = 103 #latestReleaseVersion
+    nextReleaseVersion = latestReleaseVersion
     milestones = requests.get(f"https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone={nextReleaseVersion}").json()
     nextReleaseDate = datetime.fromisoformat(milestones["mstones"][0]["stable_date"])
     print(f"Next release:   version {nextReleaseVersion}, date: {nextReleaseDate}")
@@ -42,7 +42,7 @@ def getNextRelease():
     return NextReleaseResult(version = nextReleaseVersion, releaseDate = nextReleaseDate, branch = nextReleaseBranch)
 
 def isReleaseAvailable(release):
-    return datetime.today() >= (release.releaseDate + timedelta(days=0))
+    return datetime.today() >= (release.releaseDate + timedelta(days=1))
 
 def buildWebRTC(branch):
     os.environ["BITCODE"] = "true"
