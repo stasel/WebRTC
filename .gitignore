@@ -4,3 +4,4 @@
 depot_tools
 src
 .cipd
+.gclient_previous_sync_commits
