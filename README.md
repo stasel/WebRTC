@@ -40,7 +40,7 @@ Xcode has a built-in support for Swift package manager. You can easily add the p
 Or, you can add the following dependency to your `Package.swift` file:
 ```swift
 dependencies: [
-    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("103.0.0"))
+    .Package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("106.0.0"))
 ]
 ```
 
