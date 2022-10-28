@@ -157,7 +157,7 @@ if __name__ == "__main__":
     print("➡️ Applying code changes...")
     os.system(f"sed -i '' -E 's/[0-9]+.0.0\/WebRTC-M[0-9]+/{nextRelease.version}.0.0\/WebRTC-M{nextRelease.version}/g' Package.swift WebRTC-lib.podspec")
     os.system(f"sed -i '' -E 's/checksum: \"[0-9a-f]+\"/checksum: \"{buildMetadata.checksum}\"/g' Package.swift WebRTC-lib.podspec ")
-    os.system(f"sed -i '' -E 's/.upToNextMajor([0-9]+.0.0)/.upToNextMajor({nextRelease.version}.0.0)/g' README.md WebRTC-lib.podspec")
+    os.system(f"sed -i '' -E 's/.upToNextMajor\\(\"[0-9]+.0.0/.upToNextMajor\\(\"{nextRelease.version}.0.0/g' README.md")
     os.system(f"sed -i '' -E 's/spec.version      = \"[0-9]+.0.0\"/spec.version      = \"{nextRelease.version}.0.0\"/g' WebRTC-lib.podspec")
     cartageFile = open("WebRTC.json", 'r')
 
