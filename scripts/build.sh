@@ -180,11 +180,7 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "arm64"
 
     cp -RP out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
-	# the next line is just to be sure (this could not be needed)
-    rm "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC"
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
-    # symlink the file to make xcode happy (error: codesign failed: bundle format is ambiguous (could be app or framework))
-    ln -s "Versions/Current/WebRTC" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
