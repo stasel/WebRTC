@@ -7,16 +7,15 @@ on: workflow_dispatch
 jobs:
   Build-Script:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10"]
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.x
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.x"
       - name: Running WebRTC weekly release checks
         run: |
           sh clean.sh
