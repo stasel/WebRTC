@@ -1,9 +1,8 @@
 name: WebRTC Release
-run-name: WebRTC Release check
-# on:
-#   schedule:
-#     - cron: '0 12 * * 3'
-on: workflow_dispatch
+run-name: WebRTC Release
+on:
+  schedule:
+    - cron: '0 12 * * 3'
 jobs:
   Build-Script:
     runs-on: macos-latest
