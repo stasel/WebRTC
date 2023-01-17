@@ -25,7 +25,7 @@ class BuildMetadata:
 def getNextRelease():
     # Get current version
     releases = requests.get("https://api.github.com/repos/stasel/WebRTC/releases").json()
-    latestReleaseVersion = int(releases[0]["name"][1:])
+    latestReleaseVersion = int(releases[0]["tag_name"].split(".")[0])
     latestReleaseDate = datetime.fromisoformat(releases[0]["published_at"].replace("Z", ""))
     print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
 
@@ -45,7 +45,6 @@ def isReleaseAvailable(release):
     return datetime.today() >= (release.releaseDate + timedelta(days=1))
 
 def buildWebRTC(branch):
-    os.environ["BITCODE"] = "true"
     os.environ["BUILD_VP9"] = "true"
     os.environ["BRANCH"] = branch
     os.environ["IOS"] = "true"
