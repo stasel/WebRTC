@@ -151,6 +151,10 @@ if [[ "$IOS" = true ]]; then
     lipo -create -output  "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_FLAGS}
     lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_SIM_FLAGS}
 
+    # codesign simulator framework for local development.
+    # This makes it possible for Swift Packages to run Unit Tests and show SwiftUI Previews.
+    xcrun codesign -s - "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC"
+
     LIB_COUNT=$((LIB_COUNT+2))
 fi
 
