@@ -25,7 +25,6 @@ class BuildMetadata:
 def getNextRelease():
     # Get current version
     releases = requests.get("https://api.github.com/repos/stasel/WebRTC/releases").json()
-    print(releases)
     latestReleaseVersion = int(releases[0]["tag_name"].split(".")[0])
     latestReleaseDate = datetime.fromisoformat(releases[0]["published_at"].replace("Z", ""))
     print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
