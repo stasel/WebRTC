@@ -13,8 +13,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "WebRTC",
-            url: "https://github.com/stasel/WebRTC/releases/download/113.0.0/WebRTC-M113.xcframework.zip",
-            checksum: "8d7afcd3ff5626205784f63765bd7e363eb02be61a6e8c99777771dedcfed319"
+            url: "https://github.com/stasel/WebRTC/releases/download/114.0.0/WebRTC-M114.xcframework.zip",
+            checksum: "023b2c9fb53ff014607ef2afe87e3a83c2632555562783ced682715e85da0cd9"
         ),
     ]
 )
