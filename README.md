@@ -96,7 +96,7 @@ If you wish to see how to use WebRTC I highly recommend checking out my WebRTC d
 
 ## 🛠 Compile your own WebRTC Frameworks
 If you wish to compile your own WebRTC binary framework, please refer to the following official guide:
-https://webrtc.googlesource.com/src/+/refs/heads/master/docs/native-code/ios/index.md
+https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/ios/README.md
 
 You can also take a look at the [build script](scripts/build.sh) I created for more details.
 
