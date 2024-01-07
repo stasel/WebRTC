@@ -20,4 +20,4 @@ jobs:
           sh clean.sh
           pip install requests python-telegram-bot
           python -u scripts/release.py
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+    
