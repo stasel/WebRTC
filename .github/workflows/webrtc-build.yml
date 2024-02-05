@@ -41,3 +41,8 @@ jobs:
           MACOS: ${{ inputs.macos }}
           MAC_CATALYST: ${{ inputs.maccatalyst }}
           BUILD_VP9: true
+      - name: Upload framework
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebRTC.xcframework
+          path: src/out/WebRTC.xcframework
