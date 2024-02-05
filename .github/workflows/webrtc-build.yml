@@ -1,0 +1,43 @@
+name: WebRTC Manual Build
+run-name: WebRTC Manual Build
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'webRTC branch head. Ex: branch-heads/6167'
+        required: true
+        default: "branch-heads/0000"
+        type: string
+      ios:
+        description: 'Build iOS libraries'
+        required: true
+        default: true
+        type: boolean
+      macos:
+        description: 'Build macOS libraries'
+        required: true
+        default: true
+        type: boolean
+      maccatalyst:
+        description: 'Build macOS Catalyst libraries'
+        required: true
+        default: true
+        type: boolean
+jobs:
+  Build-Script:
+    runs-on: macos-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Building WebRTC framework
+        run: |
+          sh clean.sh
+          sh scripts/build.sh
+        env:
+          BRANCH: ${{ inputs.branch }}
+          IOS: ${{ inputs.ios }}
+          MACOS: ${{ inputs.macos }}
+          MAC_CATALYST: ${{ inputs.maccatalyst }}
+          BUILD_VP9: true

@@ -16,7 +16,7 @@ MAC_CATALYST="${MAC_CATALYST:-false}"
 
 OUTPUT_DIR="./out"
 XCFRAMEWORK_DIR="out/WebRTC.xcframework"
-COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true"
+COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_ios_macos_use_opengl_rendering=true"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
 
 build_iOS() {
