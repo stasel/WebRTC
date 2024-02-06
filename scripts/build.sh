@@ -16,7 +16,7 @@ MAC_CATALYST="${MAC_CATALYST:-false}"
 
 OUTPUT_DIR="./out"
 XCFRAMEWORK_DIR="out/WebRTC.xcframework"
-COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_ios_macos_use_opengl_rendering=true"
+COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_ios_use_opengl_rendering=true"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
 
 build_iOS() {
@@ -25,6 +25,7 @@ build_iOS() {
     local gen_dir="${OUTPUT_DIR}/ios-${arch}-${environment}"
     local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"12.0\" ios_enable_code_signing=false"
     gn gen "${gen_dir}" --args="${gen_args}"
+    gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
 }
 
@@ -33,6 +34,7 @@ build_macOS() {
     local gen_dir="${OUTPUT_DIR}/macos-${arch}"
     local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"mac\""
     gn gen "${gen_dir}" --args="${gen_args}"
+    gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" mac_framework_objc || exit 1
 }
 
@@ -43,6 +45,7 @@ build_catalyst() {
     local gen_dir="${OUTPUT_DIR}/catalyst-${arch}"
     local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false"
     gn gen "${gen_dir}" --args="${gen_args}"
+    gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
 }
 
@@ -87,10 +90,6 @@ git checkout $BRANCH
 cd ..
 gclient sync --with_branch_heads --with_tags
 cd src
-
-# Step 2.5 - Apply patches (Temp)
-# sed -i '' 's/"-mllvm",$/# "-mllvm",/g' ./build/config/compiler/BUILD.gn
-# sed -i '' 's/"-instcombine-lower-dbg-declare=0",$/# "-instcombine-lower-dbg-declare=0",/g' ./build/config/compiler/BUILD.gn
 
 # Step 3 - Compile and build all frameworks
 rm -rf $OUTPUT_DIR  
