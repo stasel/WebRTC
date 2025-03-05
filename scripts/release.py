@@ -60,7 +60,7 @@ def getBuildMetadata(outputDir):
         return BuildMetadata(filename = jsonData['file'], checksum = jsonData['checksum'], commit = jsonData['commit'], branch = jsonData['branch'])
 
 def createReleaseDraft(release, buildMetadata):
-    body = "Release notes: N/A\n"
+    body = f"Release notes: https://webrtc.googlesource.com/src.git/+log/refs/{buildMetadata.branch}/\n"
     body += f"WebRTC Branch: [{buildMetadata.branch}](https://chromium.googlesource.com/external/webrtc/+log/{buildMetadata.branch})\n"
     body += f"WebRTC Commit: `{buildMetadata.commit}`\n"
     body += f"SHA 256 checksum: `{buildMetadata.checksum}`"
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     # Commit and push
     print("➡️ Commiting and pushing code to remote...")
-    os.system(f'git add .')
+    os.system(f'git add Package.swift WebRTC-lib.podspec README.md WebRTC.json')
     os.system(f'git commit -m "Updated files for release M{nextRelease.version}"')
     os.system(f'git push origin {releaseBranch}')
 
