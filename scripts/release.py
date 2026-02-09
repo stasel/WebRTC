@@ -115,7 +115,7 @@ def createPullRequest(release, head):
         'title': f'Release M{release.version}',
         'head': head,
         'base': 'latest',
-        'body': 'Created by an automated sotfware 🤖'
+        'body': f'Updated files for release M{release.version}.'
     }
     response = requests.post(f"https://api.github.com/repos/{GITHUB_REPO}/pulls", json = body, headers = headers)
     success = response.status_code == requests.codes.created
