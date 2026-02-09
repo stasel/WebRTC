@@ -31,6 +31,14 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+      # WebRTC milestone branches ship with frozen Chromium buildtools that
+      # only support the Xcode/SDK version current at the time of the branch
+      # cut. Newer Xcode versions introduce SDK framework splits (e.g.
+      # DarwinFoundation, UIUtilities) that break the build. Pin to the
+      # version expected by the buildtools (see build/mac_toolchain.py in
+      # the WebRTC source for each milestone).
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.1.app
       - name: Building WebRTC framework
         run: |
           sh clean.sh
@@ -45,4 +53,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WebRTC.xcframework
-          path: src/out/WebRTC.xcframework
+          path: src/out/WebRTC-*.xcframework.zip
