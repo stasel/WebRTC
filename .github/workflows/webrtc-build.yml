@@ -53,7 +53,6 @@ jobs:
           IOS: ${{ inputs.ios }}
           MACOS: ${{ inputs.macos }}
           MAC_CATALYST: ${{ inputs.maccatalyst }}
-          BUILD_VP9: true
       - name: Upload framework
         uses: actions/upload-artifact@v6
         with:
