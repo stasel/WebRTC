@@ -13,10 +13,12 @@ IOS="${IOS:-false}"
 MACOS="${MACOS:-false}"
 MAC_CATALYST="${MAC_CATALYST:-false}"
 
-OUTPUT_DIR="./out"
-XCFRAMEWORK_DIR="out/WebRTC.xcframework"
+ROOT_DIR=$(pwd)
+OUTPUT_DIR="${ROOT_DIR}/out"
+XCFRAMEWORK_DIR="${OUTPUT_DIR}/WebRTC.xcframework"
 COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=true is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_ios_use_opengl_rendering=true rtc_system_openh264=true rtc_use_h265=true"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
+
 
 build_iOS() {
     local arch=$1
@@ -136,11 +138,11 @@ if [[ "$IOS" = true ]]; then
     plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
     plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
-    cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    cp -r ${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    cp -r ${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
 
-    LIPO_IOS_FLAGS="out/ios-arm64-device/WebRTC.framework/WebRTC"
-    LIPO_IOS_SIM_FLAGS="out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
+    LIPO_IOS_FLAGS="${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework/WebRTC"
+    LIPO_IOS_SIM_FLAGS="${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework/WebRTC ${OUTPUT_DIR}/ios-arm64-simulator/WebRTC.framework/WebRTC"
 
     plist_add_architecture $LIB_IOS_INDEX "arm64"
     plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "arm64"
@@ -166,8 +168,8 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
-    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
+    cp -RP ${OUTPUT_DIR}/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" ${OUTPUT_DIR}/macos-x64/WebRTC.framework/WebRTC ${OUTPUT_DIR}/macos-arm64/WebRTC.framework/WebRTC
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -181,8 +183,8 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
-    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
+    cp -RP ${OUTPUT_DIR}/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" ${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC ${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -190,7 +192,7 @@ fi
 cp LICENSE ${XCFRAMEWORK_DIR}
 
 # Step 7 - archive the framework
-cd out
+cd ${OUTPUT_DIR}
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
 zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/

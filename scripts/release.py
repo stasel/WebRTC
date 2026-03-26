@@ -150,7 +150,7 @@ if __name__ == "__main__":
     print("✅ WebRTC build successful\n")
 
     # Get metadata build file - it has all the information needed about the build
-    outputDir="src/out"
+    outputDir="./out"
     buildMetadata = getBuildMetadata(outputDir)
     print(buildMetadata)
 

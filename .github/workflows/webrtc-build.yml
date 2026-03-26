@@ -57,4 +57,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: WebRTC.xcframework
-          path: src/out/WebRTC-*.xcframework.zip
+          path: out/WebRTC-*.xcframework.zip
