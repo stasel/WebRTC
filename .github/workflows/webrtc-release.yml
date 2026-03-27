@@ -36,5 +36,4 @@ jobs:
       - name: Running WebRTC release checks
         run: |
           sh scripts/clean.sh
-          pip install requests python-telegram-bot
           python -u scripts/release.py

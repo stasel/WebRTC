@@ -1,1 +1,1 @@
-rm -rf .cipd .gclient* depot_tools src .build
+rm -rf .cipd .gclient* depot_tools src .build out

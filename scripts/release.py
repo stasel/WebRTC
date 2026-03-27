@@ -3,12 +3,9 @@ import json
 import requests
 from datetime import datetime, timedelta
 from dataclasses import dataclass
-import telegram
 
 GITHUB_TOKEN=os.environ.get("GITHUB_TOKEN")
 GITHUB_REPO=os.environ.get("GITHUB_REPOSITORY", "stasel/WebRTC")
-TELEGRAM_TOKEN=os.environ.get("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_ID=os.environ.get("TELEGRAM_CHAT_ID")
 
 @dataclass
 class NextReleaseResult:
@@ -69,7 +66,6 @@ def isReleaseAvailable(release):
     return datetime.today() >= (release.releaseDate + timedelta(days=1))
 
 def buildWebRTC(branch):
-    os.environ["BUILD_VP9"] = "true"
     os.environ["BRANCH"] = branch
     os.environ["IOS"] = "true"
     os.environ["MACOS"] = "true"
@@ -204,12 +200,5 @@ if __name__ == "__main__":
     if not prResult:
         print("❌ Failed creating pull request in github")
         os._exit(os.EX_SOFTWARE)
-
-    # Notify about the new release via Telegram bot
-    if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-        print("➡️ Sending Telegram notification...")
-        bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        message = f"New WebRTC Release M{nextRelease.version} is now available.\nCheck the PR here: https://github.com/{GITHUB_REPO}/pulls"
-        bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
 
     print(f"✅ Done")

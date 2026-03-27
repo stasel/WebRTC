@@ -13,7 +13,7 @@ IOS="${IOS:-false}"
 MACOS="${MACOS:-false}"
 MAC_CATALYST="${MAC_CATALYST:-false}"
 
-ROOT_DIR=$(pwd)
+ROOT_DIR="$(pwd)"
 OUTPUT_DIR="${ROOT_DIR}/out"
 XCFRAMEWORK_DIR="${OUTPUT_DIR}/WebRTC.xcframework"
 COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=true is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_ios_use_opengl_rendering=true rtc_system_openh264=true rtc_use_h265=true"
