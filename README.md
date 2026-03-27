@@ -68,7 +68,6 @@ pod install
 Read more about Cocoapods: https://cocoapods.org
 
 ### Carthage
-**Requires Carthage version 0.38 or higher**
 
 Add the following dependency to the `Cartfile` in your project:
 ```
