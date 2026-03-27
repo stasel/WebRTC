@@ -33,6 +33,9 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install dependencies
+        run: pip install requests
+
       - name: Running WebRTC release checks
         run: |
           sh scripts/clean.sh
