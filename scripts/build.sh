@@ -4,7 +4,7 @@
 ## Created by Stasel
 ## BSD-3 License
 ## 
-## Example usage: BRANCH=branch-heads/7727 MACOS=true IOS=true sh build.sh
+## Example usage (from the repository root): BRANCH=branch-heads/7727 MACOS=true IOS=true sh scripts/build.sh
 
 # Configs
 DEBUG="${DEBUG:-false}"
@@ -138,8 +138,8 @@ if [[ "$IOS" = true ]]; then
     plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
     plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
-    cp -r ${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    cp -r ${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
 
     LIPO_IOS_FLAGS="${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework/WebRTC"
     LIPO_IOS_SIM_FLAGS="${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework/WebRTC ${OUTPUT_DIR}/ios-arm64-simulator/WebRTC.framework/WebRTC"
@@ -168,8 +168,8 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP ${OUTPUT_DIR}/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
-    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" ${OUTPUT_DIR}/macos-x64/WebRTC.framework/WebRTC ${OUTPUT_DIR}/macos-arm64/WebRTC.framework/WebRTC
+    cp -RP "${OUTPUT_DIR}/macos-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/macos-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/macos-arm64/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -183,8 +183,8 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP ${OUTPUT_DIR}/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
-    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" ${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC ${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC
+    cp -RP "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -192,7 +192,7 @@ fi
 cp LICENSE ${XCFRAMEWORK_DIR}
 
 # Step 7 - archive the framework
-cd ${OUTPUT_DIR}
+cd "${OUTPUT_DIR}"
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
 zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/
