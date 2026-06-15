@@ -1,0 +1,13 @@
+diff --git a/sdk/objc/components/renderer/metal/RTCMTLRenderer.h b/sdk/objc/components/renderer/metal/RTCMTLRenderer.h
+index 0eb6b3d..80574a6 100644
+--- a/sdk/objc/components/renderer/metal/RTCMTLRenderer.h
++++ b/sdk/objc/components/renderer/metal/RTCMTLRenderer.h
+@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
+  * for performing cleanups.
+  */
+ 
+-#if TARGET_OS_IOS
++#if TARGET_OS_IPHONE
+ - (BOOL)addRenderingDestination:(__kindof UIView *)view;
+ #else
+ - (BOOL)addRenderingDestination:(__kindof NSView *)view;

@@ -33,5 +33,7 @@ assert_contains patches/tvos/RTCAudioSessionConfiguration.patch 'TARGET_OS_TV' "
 assert_contains patches/tvos/RTCAudioSessionConfiguration.patch 'AVAudioSessionCategoryOptionAllowBluetooth' "tvOS Bluetooth option patch context"
 assert_contains patches/tvos/VoiceProcessingAudioUnit.patch 'tvOS 17' "tvOS muted speech listener availability guard"
 assert_contains patches/tvos/VoiceProcessingAudioUnit.patch 'AUVoiceIOMutedSpeechActivityEventListener' "tvOS muted speech listener patch context"
+assert_contains patches/tvos/RTCMTLRenderer.patch 'TARGET_OS_IPHONE' "tvOS Metal renderer UIKit gate"
+assert_contains patches/tvos/RTCMTLRenderer.patch 'addRenderingDestination' "tvOS Metal renderer patch context"
 
 echo "tvOS support metadata is present"
