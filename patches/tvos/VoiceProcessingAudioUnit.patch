@@ -1,0 +1,13 @@
+diff --git a/sdk/objc/native/src/audio/voice_processing_audio_unit.mm b/sdk/objc/native/src/audio/voice_processing_audio_unit.mm
+index 19534fb..fe0646e 100644
+--- a/sdk/objc/native/src/audio/voice_processing_audio_unit.mm
++++ b/sdk/objc/native/src/audio/voice_processing_audio_unit.mm
+@@ -280,7 +280,7 @@ bool VoiceProcessingAudioUnit::Initialize(AudioDeviceBuffer* audio_device_buffer
+   }
+ 
+   if (detect_mute_speech_) {
+-    if (@available(iOS 15, *)) {
++    if (@available(iOS 15, tvOS 17, *)) {
+       // Set listener for muted speech event.
+       AUVoiceIOMutedSpeechActivityEventListener listener =
+           ^(AUVoiceIOSpeechActivityEvent event) {

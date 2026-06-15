@@ -62,9 +62,10 @@ build_tvOS() {
 }
 
 apply_tvOS_patches() {
-    local patch_file="${ROOT_DIR}/patches/tvos/RTCAudioSessionConfiguration.patch"
-    git apply --check "${patch_file}" || exit 1
-    git apply "${patch_file}" || exit 1
+    for patch_file in "${ROOT_DIR}"/patches/tvos/*.patch; do
+        git apply --check "${patch_file}" || exit 1
+        git apply "${patch_file}" || exit 1
+    done
 }
 
 plist_add_library() {
