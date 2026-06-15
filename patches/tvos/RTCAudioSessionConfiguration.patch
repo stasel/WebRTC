@@ -1,0 +1,15 @@
+diff --git a/sdk/objc/components/audio/RTCAudioSessionConfiguration.m b/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
+index 6c83f13..20349f2 100644
+--- a/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
++++ b/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
+@@ -61,7 +61,9 @@ - (instancetype)init {
+     // nonmixable, hence activating the session will interrupt any other
+     // audio sessions which are also nonmixable.
+     _category = AVAudioSessionCategoryPlayAndRecord;
+-#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
++#if TARGET_OS_TV
++    _categoryOptions = 0;
++#elif defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+     _categoryOptions = AVAudioSessionCategoryOptionAllowBluetoothHFP;
+ #else
+     // Use the deprecated option on older SDKs.

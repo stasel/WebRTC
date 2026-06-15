@@ -15,6 +15,8 @@ assert_contains() {
 
 assert_contains scripts/build.sh 'TVOS="\$\{TVOS:-false\}"' "TVOS build toggle"
 assert_contains scripts/build.sh 'build_tvOS\(\)' "tvOS build function"
+assert_contains scripts/build.sh 'apply_tvOS_patches\(\)' "tvOS source patch function"
+assert_contains scripts/build.sh 'patches/tvos/RTCAudioSessionConfiguration.patch' "tvOS audio session source patch hook"
 assert_contains scripts/build.sh 'target_platform=\\"tvos\\"' "tvOS GN target platform"
 assert_contains scripts/build.sh 'use_blink=true' "tvOS GN use_blink override"
 assert_contains scripts/build.sh 'TVOS_LIB_IDENTIFIER="tvos-arm64"' "tvOS device XCFramework library"
@@ -27,5 +29,7 @@ assert_contains WebRTC-lib.podspec "spec.tvos.deployment_target = '12.0'" "Cocoa
 assert_contains README.md 'tvOS 12\+' "README tvOS requirement"
 assert_contains README.md '\*\*tvOS \(device\)\*\*' "README tvOS device binary row"
 assert_contains README.md '\*\*tvOS \(simulator\)\*\*' "README tvOS simulator binary row"
+assert_contains patches/tvos/RTCAudioSessionConfiguration.patch 'TARGET_OS_TV' "tvOS audio session availability guard"
+assert_contains patches/tvos/RTCAudioSessionConfiguration.patch 'AVAudioSessionCategoryOptionAllowBluetooth' "tvOS Bluetooth option patch context"
 
 echo "tvOS support metadata is present"

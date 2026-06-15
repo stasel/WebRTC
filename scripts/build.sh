@@ -61,6 +61,12 @@ build_tvOS() {
     ninja -C "${gen_dir}" framework_objc || exit 1
 }
 
+apply_tvOS_patches() {
+    local patch_file="${ROOT_DIR}/patches/tvos/RTCAudioSessionConfiguration.patch"
+    git apply --check "${patch_file}" || exit 1
+    git apply "${patch_file}" || exit 1
+}
+
 plist_add_library() {
     local index=$1
     local identifier=$2
@@ -102,6 +108,10 @@ git checkout $BRANCH
 cd ..
 gclient sync --with_branch_heads --with_tags
 cd src
+
+if [ "$TVOS" = true ]; then
+    apply_tvOS_patches
+fi
 
 # Step 3 - Compile and build all frameworks
 rm -rf $OUTPUT_DIR  
