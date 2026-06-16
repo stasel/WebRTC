@@ -13,6 +13,17 @@ assert_contains() {
     fi
 }
 
+assert_not_contains() {
+    file=$1
+    pattern=$2
+    description=$3
+
+    if rg -q "$pattern" "$file"; then
+        echo "Unexpected ${description} in ${file}" >&2
+        exit 1
+    fi
+}
+
 assert_contains scripts/build.sh 'TVOS="\$\{TVOS:-false\}"' "TVOS build toggle"
 assert_contains scripts/build.sh 'build_tvOS\(\)' "tvOS build function"
 assert_contains scripts/build.sh 'apply_tvOS_patches\(\)' "tvOS source patch function"
@@ -20,7 +31,9 @@ assert_contains scripts/build.sh 'patches/tvos/\*.patch' "tvOS source patch glob
 assert_contains scripts/build.sh 'target_platform=\\"tvos\\"' "tvOS GN target platform"
 assert_contains scripts/build.sh 'use_blink=true' "tvOS GN use_blink override"
 assert_contains scripts/build.sh 'TVOS_LIB_IDENTIFIER="tvos-arm64"' "tvOS device XCFramework library"
-assert_contains scripts/build.sh 'TVOS_SIM_LIB_IDENTIFIER="tvos-x86_64_arm64-simulator"' "tvOS simulator XCFramework library"
+assert_contains scripts/build.sh 'TVOS_SIM_LIB_IDENTIFIER="tvos-arm64-simulator"' "tvOS simulator XCFramework library"
+assert_not_contains scripts/build.sh 'build_tvOS "x64" "simulator"' "x86_64 tvOS simulator build"
+assert_not_contains scripts/build.sh 'tvos-x64-simulator' "x86_64 tvOS simulator packaging"
 assert_contains .github/workflows/webrtc-build.yml 'tvos:' "manual workflow tvOS input"
 assert_contains .github/workflows/webrtc-build.yml 'TVOS: \$\{\{ inputs.tvos \}\}' "manual workflow TVOS env"
 assert_contains scripts/release.py 'os.environ\["TVOS"\] = "true"' "release TVOS env"

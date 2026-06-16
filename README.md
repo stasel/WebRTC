@@ -32,7 +32,7 @@ The binary releases correspond with official Chromium releases and branches as s
 | **iOS (device)**    |   ✅   |   N/A   |
 | **iOS (simulator)** |   ✅   |    ✅   |
 | **tvOS (device)**   |   ✅   |   N/A   |
-| **tvOS (simulator)**|   ✅   |    ✅   |
+| **tvOS (simulator)**|   ✅   |   N/A   |
 | **macOS**           |   ✅   |    ✅   |
 | **macOS Catalyst**  |   ✅   |    ✅   | 
 

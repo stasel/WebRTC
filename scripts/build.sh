@@ -134,7 +134,6 @@ if [ "$MAC_CATALYST" = true ]; then
 fi
 
 if [ "$TVOS" = true ]; then
-    build_tvOS "x64" "simulator"
     build_tvOS "arm64" "simulator"
     build_tvOS "arm64" "device"
 fi
@@ -220,7 +219,7 @@ fi
 if [ "$TVOS" = true ]; then
 
     TVOS_LIB_IDENTIFIER="tvos-arm64"
-    TVOS_SIM_LIB_IDENTIFIER="tvos-x86_64_arm64-simulator"
+    TVOS_SIM_LIB_IDENTIFIER="tvos-arm64-simulator"
 
     mkdir "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}"
     mkdir "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
@@ -230,14 +229,13 @@ if [ "$TVOS" = true ]; then
     plist_add_library $LIB_TVOS_SIMULATOR_INDEX $TVOS_SIM_LIB_IDENTIFIER "tvos" "simulator"
 
     cp -r "${OUTPUT_DIR}/tvos-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}"
-    cp -r "${OUTPUT_DIR}/tvos-x64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
 
     LIPO_TVOS_FLAGS="${OUTPUT_DIR}/tvos-arm64-device/WebRTC.framework/WebRTC"
-    LIPO_TVOS_SIM_FLAGS="${OUTPUT_DIR}/tvos-x64-simulator/WebRTC.framework/WebRTC ${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework/WebRTC"
+    LIPO_TVOS_SIM_FLAGS="${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework/WebRTC"
 
     plist_add_architecture $LIB_TVOS_INDEX "arm64"
     plist_add_architecture $LIB_TVOS_SIMULATOR_INDEX "arm64"
-    plist_add_architecture $LIB_TVOS_SIMULATOR_INDEX "x86_64"
 
     lipo -create -output  "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_TVOS_FLAGS}
     lipo -create -output "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_TVOS_SIM_FLAGS}
