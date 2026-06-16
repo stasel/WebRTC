@@ -1,0 +1,39 @@
+diff --git a/sdk/BUILD.gn b/sdk/BUILD.gn
+index 79c1734..db4a5d5 100644
+--- a/sdk/BUILD.gn
++++ b/sdk/BUILD.gn
+@@ -681,14 +681,18 @@ if (is_ios || is_mac) {
+     rtc_library("videocapture_objc") {
+       visibility = [ "*" ]
+       allow_poison = [ "audio_codecs" ]  # TODO(bugs.webrtc.org/8396): Remove.
+       sources = [
+-        "objc/components/capturer/RTCCameraVideoCapturer.h",
+-        "objc/components/capturer/RTCCameraVideoCapturer.m",
+         "objc/components/capturer/RTCFileVideoCapturer.h",
+         "objc/components/capturer/RTCFileVideoCapturer.m",
+       ]
++      if (target_platform != "tvos") {
++        sources += [
++          "objc/components/capturer/RTCCameraVideoCapturer.h",
++          "objc/components/capturer/RTCCameraVideoCapturer.m",
++        ]
++      }
+       frameworks = [
+         "AVFoundation.framework",
+         "CoreVideo.framework",
+         "QuartzCore.framework",
+       ]
+@@ -1398,7 +1402,13 @@ if (is_ios || is_mac) {
+             "objc/api/logging/RTCCallbackLogger.h",
+             "objc/api/peerconnection/RTCFileLogger.h",
+           ]
+         }
++        if (target_platform == "tvos") {
++          common_objc_headers -= [
++            "objc/components/capturer/RTCCameraVideoCapturer.h",
++            "objc/helpers/RTCCameraPreviewView.h",
++          ]
++        }
+ 
+         sources = common_objc_headers
+         public_headers = common_objc_headers
