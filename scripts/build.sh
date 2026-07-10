@@ -41,10 +41,11 @@ build_macOS() {
 
 # Catalyst builds are not working properly yet. 
 # See: https://groups.google.com/g/discuss-webrtc/c/VZXS4V4mSY4
+# Must link Catalyst with Apple's linker instead of lld (use_lld=false)
 build_catalyst() {
     local arch=$1
     local gen_dir="${OUTPUT_DIR}/catalyst-${arch}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false use_lld=false"
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
@@ -71,6 +72,15 @@ plist_add_architecture() {
     "$PLISTBUDDY_EXEC" -c "Add :AvailableLibraries:${index}:SupportedArchitectures: string ${arch}"  "${INFO_PLIST}"
 }
 
+fix_privacy_manifest() {
+    local framework=$1
+    local nested="${framework}/Versions/A/Versions"
+    if [ -f "${nested}/A/Resources/PrivacyInfo.xcprivacy" ]; then
+        mv "${nested}/A/Resources/PrivacyInfo.xcprivacy" "${framework}/Versions/A/Resources/" || exit 1
+        rm -rf "${nested}"
+    fi
+}
+
 # Step 1: Download and install depot tools
 if [ ! -d depot_tools ]; then
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -83,13 +93,17 @@ export PATH=$(pwd)/depot_tools:$PATH
 
 # Step 2 - Download and build WebRTC
 if [ ! -d src ]; then
-    fetch --nohooks webrtc_ios
+    fetch --nohooks webrtc_ios || exit 1
 fi
 cd src
-git fetch --all
-git checkout $BRANCH
+git fetch --all || exit 1
+git checkout "$BRANCH" || exit 1
 cd ..
-gclient sync --with_branch_heads --with_tags
+gclient sync --with_branch_heads --with_tags || exit 1
+
+# Step 2.5 - Temp patch for macOS arm64 builds
+bash "${ROOT_DIR}/scripts/patches/disable_apple_linker.sh" "${ROOT_DIR}/src/build/toolchain/apple/toolchain.gni" || exit 1
+
 cd src
 
 # Step 3 - Compile and build all frameworks
@@ -169,6 +183,15 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "arm64"
 
     cp -RP "${OUTPUT_DIR}/macos-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+
+    # The generated macOS framework bundle contains only the umbrella header:
+    # since M141 the other public headers are left behind in the intermediate
+    # gen/ directory and never staged into the bundle, which makes the
+    # framework unusable (https://github.com/stasel/WebRTC/issues/132).
+    # Copy them in until this is fixed upstream.
+    cp "${OUTPUT_DIR}/macos-x64/gen/sdk/WebRTC.framework/Headers/"*.h "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/Headers/" || exit 1
+    fix_privacy_manifest "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework"
+
     lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/macos-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/macos-arm64/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
@@ -184,6 +207,7 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "arm64"
 
     cp -RP "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    fix_privacy_manifest "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework"
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
@@ -199,7 +223,7 @@ zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/
 
 # Step 8 calculate SHA256 checksum
 CHECKSUM=$(shasum -a 256 $OUTPUT_NAME | awk '{ print $1 }')
-COMMIT_HASH=$(git rev-parse HEAD)
+COMMIT_HASH=$(git -C ${ROOT_DIR}/src rev-parse HEAD)
 
 echo "{ \"file\": \"${OUTPUT_NAME}\", \"checksum\": \"${CHECKSUM}\", \"commit\": \"${COMMIT_HASH}\", \"branch\": \"${BRANCH}\" }" > metadata.json
 cat metadata.json
