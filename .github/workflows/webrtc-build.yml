@@ -27,6 +27,11 @@ on:
         required: true
         default: true
         type: boolean
+      tvos:
+        description: "Build tvOS libraries"
+        required: true
+        default: true
+        type: boolean
 jobs:
   Build-Script:
     runs-on: macos-latest
@@ -53,6 +58,7 @@ jobs:
           IOS: ${{ inputs.ios }}
           MACOS: ${{ inputs.macos }}
           MAC_CATALYST: ${{ inputs.maccatalyst }}
+          TVOS: ${{ inputs.tvos }}
       - name: Upload framework
         uses: actions/upload-artifact@v6
         with:

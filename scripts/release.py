@@ -69,6 +69,7 @@ def buildWebRTC(branch):
     os.environ["IOS"] = "true"
     os.environ["MACOS"] = "true"
     os.environ["MAC_CATALYST"] = "true"
+    os.environ["TVOS"] = "true"
 
     return os.system('sh scripts/build.sh') == 0
 

@@ -1,4 +1,4 @@
-# WebRTC Binaries for iOS and macOS
+# WebRTC Binaries for iOS, tvOS, and macOS
 [![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
 [![Cocoapods](https://img.shields.io/cocoapods/v/WebRTC-lib)](https://cocoapods.org/pods/WebRTC-lib)
 [![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
@@ -6,7 +6,7 @@
 [![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)](https://github.com/stasel/WebRTC/releases)
 
 
-This repository contains a community-driven distribution of WebRTC framework binaries for iOS and macOS.
+This repository contains a community-driven distribution of WebRTC framework binaries for iOS, tvOS, and macOS.
 
 Since version M80, Google has [deprecated](https://groups.google.com/g/discuss-webrtc/c/Ozvbd0p7Q1Y/m/M4WN2cRKCwAJ?pli=1) their mobile binary libraries distributions (Was officially using the [GoogleWebRTC pod](https://cocoapods.org/pods/GoogleWebRTC)). To get the most up to date WebRTC library, you can compile it on your own, or you can use precompiled binaries from here or other sources.
 
@@ -17,12 +17,13 @@ The binary releases correspond with official Chromium releases and branches as s
 * All binaries in this repository are compiled from the official WebRTC [source code](https://webrtc.googlesource.com/src/) .
 * No modifications are made to the source code or the output binaries.
 * The build process is open source using GitHub actions.
-* Dynamic framework (xcframework format) which contains multiple binaries for macOS and iOS.
+* Dynamic framework (xcframework format) which contains multiple binaries for iOS, tvOS, and macOS.
 * Since [Xcode 14](https://developer.apple.com/documentation/Xcode-Release-Notes/xcode-14-release-notes), bitcode is deprecated. Version M103 and above does not include bitcode.
 * Added support for extra encodings: VP9, H264, H265 (HEVC)
 
 ## 📢 Requirements
 * iOS 12+
+* tvOS 12+
 * macOS 10.11+
 * macOS Catalyst 11.0+
 
@@ -31,6 +32,8 @@ The binary releases correspond with official Chromium releases and branches as s
 |---------------------|--------|---------|
 | **iOS (device)**    |   ✅   |   N/A   |
 | **iOS (simulator)** |   ✅   |    ✅   |
+| **tvOS (device)**   |   ✅   |   N/A   |
+| **tvOS (simulator)**|   ✅   |   N/A   |
 | **macOS**           |   ✅   |    ✅   |
 | **macOS Catalyst**  |   ✅   |    ✅   | 
 

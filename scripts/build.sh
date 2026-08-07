@@ -4,7 +4,7 @@
 ## Created by Stasel
 ## BSD-3 License
 ## 
-## Example usage (from the repository root): BRANCH=branch-heads/7727 MACOS=true IOS=true sh scripts/build.sh
+## Example usage (from the repository root): BRANCH=branch-heads/7727 MACOS=true IOS=true TVOS=true sh scripts/build.sh
 
 # Configs
 DEBUG="${DEBUG:-false}"
@@ -12,6 +12,7 @@ BRANCH="${BRANCH:-main}"
 IOS="${IOS:-false}"
 MACOS="${MACOS:-false}"
 MAC_CATALYST="${MAC_CATALYST:-false}"
+TVOS="${TVOS:-false}"
 
 ROOT_DIR="$(pwd)"
 OUTPUT_DIR="${ROOT_DIR}/out"
@@ -49,6 +50,23 @@ build_catalyst() {
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
+}
+
+build_tvOS() {
+    local arch=$1
+    local environment=$2
+    local gen_dir="${OUTPUT_DIR}/tvos-${arch}-${environment}"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"ios\" target_platform=\"tvos\" target_environment=\"${environment}\" ios_deployment_target=\"12.0\" ios_enable_code_signing=false use_blink=true"
+    gn gen "${gen_dir}" --args="${gen_args}"
+    gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
+    ninja -C "${gen_dir}" framework_objc || exit 1
+}
+
+apply_tvOS_patches() {
+    for patch_file in "${ROOT_DIR}"/patches/tvos/*.patch; do
+        git apply --check "${patch_file}" || exit 1
+        git apply "${patch_file}" || exit 1
+    done
 }
 
 plist_add_library() {
@@ -106,6 +124,10 @@ bash "${ROOT_DIR}/scripts/patches/disable_apple_linker.sh" "${ROOT_DIR}/src/buil
 
 cd src
 
+if [ "$TVOS" = true ]; then
+    apply_tvOS_patches
+fi
+
 # Step 3 - Compile and build all frameworks
 rm -rf $OUTPUT_DIR  
 
@@ -123,6 +145,11 @@ fi
 if [ "$MAC_CATALYST" = true ]; then
     build_catalyst "x64"
     build_catalyst "arm64"
+fi
+
+if [ "$TVOS" = true ]; then
+    build_tvOS "arm64" "simulator"
+    build_tvOS "arm64" "device"
 fi
 
 # Step 4 - Manually create XCFramework.
@@ -212,6 +239,38 @@ if [ "$MAC_CATALYST" = true ]; then
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
+# Step 5.4 - Add tvOS libs to XCFramework
+if [ "$TVOS" = true ]; then
+
+    TVOS_LIB_IDENTIFIER="tvos-arm64"
+    TVOS_SIM_LIB_IDENTIFIER="tvos-arm64-simulator"
+
+    mkdir "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}"
+    mkdir "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
+    LIB_TVOS_INDEX=$LIB_COUNT
+    LIB_TVOS_SIMULATOR_INDEX=$((LIB_COUNT+1))
+    plist_add_library $LIB_TVOS_INDEX $TVOS_LIB_IDENTIFIER "tvos"
+    plist_add_library $LIB_TVOS_SIMULATOR_INDEX $TVOS_SIM_LIB_IDENTIFIER "tvos" "simulator"
+
+    cp -r "${OUTPUT_DIR}/tvos-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
+
+    LIPO_TVOS_FLAGS="${OUTPUT_DIR}/tvos-arm64-device/WebRTC.framework/WebRTC"
+    LIPO_TVOS_SIM_FLAGS="${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework/WebRTC"
+
+    plist_add_architecture $LIB_TVOS_INDEX "arm64"
+    plist_add_architecture $LIB_TVOS_SIMULATOR_INDEX "arm64"
+
+    lipo -create -output  "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_TVOS_FLAGS}
+    lipo -create -output "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_TVOS_SIM_FLAGS}
+
+    # codesign simulator framework for local development.
+    # This makes it possible for Swift Packages to run Unit Tests and show SwiftUI Previews.
+    xcrun codesign -s - "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC"
+
+    LIB_COUNT=$((LIB_COUNT+2))
+fi
+
 # Step 6 - Add license file to the framework
 cp LICENSE ${XCFRAMEWORK_DIR}
 
@@ -227,4 +286,3 @@ COMMIT_HASH=$(git -C ${ROOT_DIR}/src rev-parse HEAD)
 
 echo "{ \"file\": \"${OUTPUT_NAME}\", \"checksum\": \"${CHECKSUM}\", \"commit\": \"${COMMIT_HASH}\", \"branch\": \"${BRANCH}\" }" > metadata.json
 cat metadata.json
-
