@@ -18,8 +18,8 @@ The binary releases correspond with official Chromium releases and branches as s
 * No modifications are made to the source code or the output binaries.
 * The build process is open source using GitHub actions.
 * Dynamic framework (xcframework format) which contains multiple binaries for macOS and iOS.
-* Since [Xcode 14](https://developer.apple.com/documentation/Xcode-Release-Notes/xcode-14-release-notes), bitcode is deprecated. Version M103 and above does not include bitcode.
 * Added support for extra encodings: VP9, H264, H265 (HEVC)
+* dSYM files are included in case you need them. You can download them from the [releases page](https://github.com/stasel/WebRTC/releases).
 
 ## 📢 Requirements
 * iOS 12+

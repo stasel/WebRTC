@@ -154,13 +154,21 @@ if __name__ == "__main__":
     githubReleaseDraft = createReleaseDraft(nextRelease ,buildMetadata)
 
     # Upload asset to github
-    print("➡️ Uploading asset to github...")
-    assetName = f"WebRTC-M{nextRelease.version}.xcframework.zip"
-    assetPath = os.path.join(outputDir, buildMetadata.filename)
+    print("➡️ Uploading assets to github...")
     uploadURL = githubReleaseDraft['upload_url']
-    uploadResult = uploadReleaseAsset(uploadURL, assetPath, assetName)
+    uploadResultFramework = uploadReleaseAsset(
+        uploadURL, 
+        os.path.join(outputDir, buildMetadata.filename),
+        f"WebRTC-M{nextRelease.version}.xcframework.zip"
+    )
 
-    if not uploadResult:
+    uploadResultdSYM = uploadReleaseAsset(
+        uploadURL, 
+        os.path.join(outputDir, buildMetadata.dsym), 
+        f"WebRTC-M{nextRelease.version}-dSYM.zip"
+    )
+
+    if not uploadResultFramework or not uploadResultdSYM:
         print("❌ Failed uploading asset to github")
         os._exit(os.EX_SOFTWARE)
 
@@ -188,7 +196,7 @@ if __name__ == "__main__":
 
 
     # Commit and push
-    print("➡️ Commiting and pushing code to remote...")
+    print("➡️ Committing and pushing code to remote...")
     os.system(f'git add Package.swift WebRTC-lib.podspec README.md WebRTC.json')
     os.system(f'git commit -m "Updated files for release M{nextRelease.version}"')
     os.system(f'git push origin {releaseBranch}')
