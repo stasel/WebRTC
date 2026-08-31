@@ -81,6 +81,27 @@ fix_privacy_manifest() {
     fi
 }
 
+# Stage the dSYM for one XCFramework slice, named after its library identifier.
+# Pass a second build directory when the slice's binary is lipo'd from two architectures.
+stage_dsym() {
+    local identifier=$1
+    local build_dir=$2
+    local extra_build_dir=$3
+    local dsym="${OUTPUT_DIR}/WebRTC-${identifier}.dSYM"
+    local dwarf="Contents/Resources/DWARF/WebRTC"
+    local relocations="Contents/Resources/Relocations"
+
+    rm -rf "${dsym}"
+    cp -r "${OUTPUT_DIR}/${build_dir}/WebRTC.dSYM" "${dsym}" || exit 1
+
+    if [ ! -z "${extra_build_dir}" ]; then
+        cp -r "${OUTPUT_DIR}/${extra_build_dir}/WebRTC.dSYM/${relocations}/" "${dsym}/${relocations}/"
+        lipo -create -output "${dsym}/${dwarf}" \
+            "${OUTPUT_DIR}/${build_dir}/WebRTC.dSYM/${dwarf}" \
+            "${OUTPUT_DIR}/${extra_build_dir}/WebRTC.dSYM/${dwarf}" || exit 1
+    fi
+}
+
 # Step 1: Download and install depot tools
 if [ ! -d depot_tools ]; then
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -154,9 +175,8 @@ if [[ "$IOS" = true ]]; then
 
     cp -r "${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
     cp -r "${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    cp -r ${OUTPUT_DIR}/ios-x64-simulator/WebRTC.dSYM "${OUTPUT_DIR}/WebRTC-ios-x86_64-simulator.dSYM"
-    cp -r ${OUTPUT_DIR}/ios-arm64-simulator/WebRTC.dSYM "${OUTPUT_DIR}/WebRTC-ios-arm64-simulator.dSYM"
-    cp -r ${OUTPUT_DIR}/ios-arm64-device/WebRTC.dSYM "${OUTPUT_DIR}/WebRTC-ios-arm64-device.dSYM"
+    stage_dsym "${IOS_LIB_IDENTIFIER}" "ios-arm64-device"
+    stage_dsym "${IOS_SIM_LIB_IDENTIFIER}" "ios-x64-simulator" "ios-arm64-simulator"
 
     LIPO_IOS_FLAGS="${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework/WebRTC"
     LIPO_IOS_SIM_FLAGS="${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework/WebRTC ${OUTPUT_DIR}/ios-arm64-simulator/WebRTC.framework/WebRTC"
@@ -186,7 +206,7 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "arm64"
 
     cp -RP "${OUTPUT_DIR}/macos-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
-    cp -r ${OUTPUT_DIR}/macos-x64/WebRTC.dSYM "${OUTPUT_DIR}/WebRTC-${MAC_LIB_IDENTIFIER}.dSYM"
+    stage_dsym "${MAC_LIB_IDENTIFIER}" "macos-x64" "macos-arm64"
 
     # The generated macOS framework bundle contains only the umbrella header:
     # since M141 the other public headers are left behind in the intermediate
@@ -211,7 +231,7 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "arm64"
 
     cp -RP "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
-    cp -r ${OUTPUT_DIR}/catalyst-x64/WebRTC.dSYM "${OUTPUT_DIR}/WebRTC-${CATALYST_LIB_IDENTIFIER}.dSYM"
+    stage_dsym "${CATALYST_LIB_IDENTIFIER}" "catalyst-x64" "catalyst-arm64"
 
     fix_privacy_manifest "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework"
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC"
@@ -225,11 +245,11 @@ cp LICENSE ${XCFRAMEWORK_DIR}
 cd "${OUTPUT_DIR}"
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
-zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/
+zip --symlinks -rq $OUTPUT_NAME WebRTC.xcframework/
 
 # Step 8 - archive the dSYM files
 DSYM_OUTPUT_NAME=WebRTC-$NOW-dSYM.zip
-zip -rm $DSYM_OUTPUT_NAME WebRTC-*.dSYM
+zip -rmq $DSYM_OUTPUT_NAME WebRTC-*.dSYM
 
 # Step 9 - calculate SHA256 checksum
 CHECKSUM=$(shasum -a 256 $OUTPUT_NAME | awk '{ print $1 }')
