@@ -18,8 +18,9 @@ The binary releases correspond with official Chromium releases and branches as s
 * No modifications are made to the source code or the output binaries.
 * The build process is open source using GitHub actions.
 * Dynamic framework (xcframework format) which contains multiple binaries for macOS and iOS.
-* Added support for extra encodings: VP9, H264, H265 (HEVC)
-* dSYM files are included in case you need them. You can download them from the [releases page](https://github.com/stasel/WebRTC/releases).
+* Added support for extra encodings: VP9, H264 and AV1.
+* H.265 / HEVC: the SDP negotiation and RTP packetization layer is compiled but WebRTC ships no HEVC encoder or decoder for Apple platforms.
+* dSYM files are included in case you need them. You can download them from the [releases page](https://github.com/stasel/WebRTC/releases). *(Available from version M152).*
 
 ## 📢 Requirements
 * iOS 12+
@@ -103,6 +104,6 @@ https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/ios/READM
 
 You can also take a look at the [build script](scripts/build.sh) I created for more details.
 
-## 📃 License
-* BSD 3-Clause License
+## 📃 Licenses
+* Build scripts (this repository): `BSD 3-Clause License`
 * WebRTC License: https://webrtc.org/support/license
