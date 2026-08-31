@@ -19,6 +19,7 @@ class BuildMetadata:
     checksum: str
     commit: str
     branch: str
+    dsym: str
 
 def getStableMilestone():
     """Find the current stable milestone from the Chromium Dashboard."""
