@@ -112,6 +112,9 @@ else
 fi
 export PATH=$(pwd)/depot_tools:$PATH
 
+# Bootstrap depot_tools before running any of its tools.
+ensure_bootstrap || exit 1
+
 # Step 2 - Download and build WebRTC
 if [ ! -d src ]; then
     fetch --nohooks webrtc_ios || exit 1
