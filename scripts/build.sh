@@ -112,6 +112,17 @@ else
 fi
 export PATH=$(pwd)/depot_tools:$PATH
 
+# Step 1.5: Bootstrap depot_tools before running any of its tools.
+# The `fetch` and `ninja` wrappers exec the hermetic interpreter at
+# depot_tools/python-bin/python3, which refuses to run unless the bootstrap
+# marker depot_tools/python3_bin_reldir.txt exists. That marker is gitignored,
+# so a fresh clone does not have it and `fetch` fails immediately with
+# "python3_bin_reldir.txt not found". `gclient` bootstraps itself via
+# update_depot_tools, but `fetch` runs first, so bootstrap explicitly here.
+# See depot_tools d4e9589 "Make some of the tools use hermetic python in the
+# python-bin."
+ensure_bootstrap || exit 1
+
 # Step 2 - Download and build WebRTC
 if [ ! -d src ]; then
     fetch --nohooks webrtc_ios || exit 1
