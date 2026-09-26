@@ -1,11 +1,15 @@
 import os
 import json
 import requests
+import re
+import subprocess
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
-GITHUB_TOKEN=os.environ.get("GITHUB_TOKEN")
-GITHUB_REPO=os.environ.get("GITHUB_REPOSITORY", "stasel/WebRTC")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "stasel/WebRTC")
+INITIAL_WEBRTC_MILESTONE = os.environ.get("INITIAL_WEBRTC_MILESTONE")
+VERSION_RE = re.compile(r"^(\d+)\.\d+\.\d+$")
 
 @dataclass
 class NextReleaseResult:
@@ -20,6 +24,129 @@ class BuildMetadata:
     commit: str
     branch: str
     dsym: str
+
+def githubHeaders():
+    headers = {'accept': 'application/vnd.github.v3+json'}
+    if GITHUB_TOKEN:
+        headers['Authorization'] = f"token {GITHUB_TOKEN}"
+    return headers
+
+def milestoneFromVersion(value):
+    if not value:
+        return None
+
+    match = VERSION_RE.match(value.strip())
+    if not match:
+        return None
+
+    return int(match.group(1))
+
+def localMetadataMilestones():
+    milestones = []
+
+    try:
+        with open("WebRTC.json", 'r') as f:
+            for version in json.loads(f.read()).keys():
+                milestone = milestoneFromVersion(version)
+                if milestone:
+                    milestones.append(milestone)
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
+        print(f"Warning: failed to read WebRTC.json: {e}")
+
+    for filename in ["Package.swift", "WebRTC-lib.podspec"]:
+        try:
+            with open(filename, 'r') as f:
+                for match in re.finditer(
+                    r"/download/([0-9]+\.[0-9]+\.[0-9]+)/",
+                    f.read()
+                ):
+                    milestone = milestoneFromVersion(match.group(1))
+                    if milestone:
+                        milestones.append(milestone)
+        except OSError as e:
+            print(f"Warning: failed to read {filename}: {e}")
+
+    try:
+        tags = subprocess.check_output(
+            ["git", "tag", "--list"],
+            text=True
+        )
+        for tag in tags.splitlines():
+            milestone = milestoneFromVersion(tag)
+            if milestone:
+                milestones.append(milestone)
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f"Warning: failed to read git tags: {e}")
+
+    return milestones
+
+def currentMilestoneFromMetadata():
+    milestones = localMetadataMilestones()
+    if milestones:
+        milestone = max(milestones)
+        print(f"Latest local metadata release: version {milestone}")
+        return milestone
+
+    if INITIAL_WEBRTC_MILESTONE:
+        try:
+            milestone = int(INITIAL_WEBRTC_MILESTONE)
+            print(f"Latest release fallback: version {milestone}")
+            return milestone
+        except ValueError:
+            print(
+                "Warning: INITIAL_WEBRTC_MILESTONE must be an integer, "
+                f"got {INITIAL_WEBRTC_MILESTONE}"
+            )
+
+    print("❌ No GitHub releases or local metadata versions were found")
+    os._exit(os.EX_SOFTWARE)
+
+def currentMilestoneFromGitHubReleases():
+    try:
+        response = requests.get(
+            f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+            headers=githubHeaders()
+        )
+        response.raise_for_status()
+        releases = response.json()
+    except requests.RequestException as e:
+        print(
+            f"Warning: failed to fetch GitHub releases for {GITHUB_REPO}: "
+            f"{e}; using repository metadata instead"
+        )
+        return currentMilestoneFromMetadata()
+
+    if not isinstance(releases, list):
+        print(f"❌ Unexpected GitHub releases response: {releases}")
+        os._exit(os.EX_SOFTWARE)
+
+    releaseVersions = [
+        milestoneFromVersion(release.get("tag_name", ""))
+        for release in releases
+    ]
+    releaseVersions = [version for version in releaseVersions if version]
+
+    if not releaseVersions:
+        print(
+            f"Warning: no GitHub releases found for {GITHUB_REPO}; "
+            "using repository metadata instead"
+        )
+        return currentMilestoneFromMetadata()
+
+    latestReleaseVersion = max(releaseVersions)
+    latestRelease = next(
+        release for release in releases
+        if milestoneFromVersion(release.get("tag_name", ""))
+        == latestReleaseVersion
+    )
+    latestReleaseDate = datetime.fromisoformat(
+        latestRelease["published_at"].replace("Z", "")
+    )
+    print(
+        f"Latest release: version {latestReleaseVersion}, "
+        f"date: {latestReleaseDate}"
+    )
+    return latestReleaseVersion
 
 def getStableMilestone():
     """Find the current stable milestone from the Chromium Dashboard."""
@@ -37,10 +164,7 @@ def getStableMilestone():
 
 def getNextRelease():
     # Get current version
-    releases = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/releases", headers={'Authorization': f"token {GITHUB_TOKEN}"}).json()
-    latestReleaseVersion = int(releases[0]["tag_name"].split(".")[0])
-    latestReleaseDate = datetime.fromisoformat(releases[0]["published_at"].replace("Z", ""))
-    print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
+    latestReleaseVersion = currentMilestoneFromGitHubReleases()
 
     # Get the current stable milestone
     stableMilestone = getStableMilestone()
@@ -90,15 +214,20 @@ def createReleaseDraft(release, buildMetadata):
         'draft': True,
         'body': body
     }
-    headers = {'accept': 'application/vnd.github.v3+json', 'Authorization': f'token {GITHUB_TOKEN}'}
-    return requests.post(f"https://api.github.com/repos/{GITHUB_REPO}/releases", json = fields, headers = headers).json()
+    return requests.post(
+        f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+        json=fields,
+        headers=githubHeaders()
+    ).json()
 
 def uploadReleaseAsset(url, assetLocalPath, assetName):
     url = url.replace(u'{?name,label}','')
     fileToUpload = open(assetLocalPath, 'rb')  
     size = os.stat(assetLocalPath).st_size
     params = {'name': assetName}
-    headers = {'Authorization': f'token {GITHUB_TOKEN}', 'Content-Length': str(size), 'Content-Type': 'Application/zip'}
+    headers = githubHeaders()
+    headers['Content-Length'] = str(size)
+    headers['Content-Type'] = 'Application/zip'
     response = requests.post(url, params = params, data = fileToUpload, headers = headers)
     success = response.status_code == requests.codes.created
     if not success:
@@ -106,18 +235,31 @@ def uploadReleaseAsset(url, assetLocalPath, assetName):
     return success
 
 def createPullRequest(release, head):
-    headers = {'accept': 'application/vnd.github.v3+json', 'Authorization': f'token {GITHUB_TOKEN}'}
     body = { 
         'title': f'Release M{release.version}',
         'head': head,
         'base': 'latest',
         'body': f'Updated files for release M{release.version}.'
     }
-    response = requests.post(f"https://api.github.com/repos/{GITHUB_REPO}/pulls", json = body, headers = headers)
+    response = requests.post(
+        f"https://api.github.com/repos/{GITHUB_REPO}/pulls",
+        json=body,
+        headers=githubHeaders()
+    )
     success = response.status_code == requests.codes.created
     if not success:
         print(response)
     return success
+
+def replaceInFile(filename, replacements):
+    with open(filename, 'r') as f:
+        content = f.read()
+
+    for pattern, replacement in replacements:
+        content = re.sub(pattern, replacement, content)
+
+    with open(filename, 'w') as f:
+        f.write(content)
 
 if __name__ == "__main__":
     if not GITHUB_TOKEN:
@@ -153,6 +295,9 @@ if __name__ == "__main__":
     # Create new release draft
     print("➡️ Creating new release draft...")
     githubReleaseDraft = createReleaseDraft(nextRelease ,buildMetadata)
+    if 'upload_url' not in githubReleaseDraft:
+        print(f"❌ Failed creating release draft: {githubReleaseDraft}")
+        os._exit(os.EX_SOFTWARE)
 
     # Upload asset to github
     print("➡️ Uploading assets to github...")
@@ -182,14 +327,38 @@ if __name__ == "__main__":
 
     # Change code
     print("➡️ Applying code changes...")
-    os.system(f"sed -i '' -E 's/[0-9]+\.[0-9]+\.[0-9]+\/WebRTC-M[0-9]+/{nextRelease.version}.0.0\/WebRTC-M{nextRelease.version}/g' Package.swift WebRTC-lib.podspec")
-    os.system(f"sed -i '' -E 's/checksum: \"[0-9a-f]+\"/checksum: \"{buildMetadata.checksum}\"/g' Package.swift WebRTC-lib.podspec ")
-    os.system(f"sed -i '' -E 's/.upToNextMajor\\(\"[0-9]+\.[0-9]+\.[0-9]+/.upToNextMajor\\(\"{nextRelease.version}.0.0/g' README.md")
-    os.system(f"sed -i '' -E 's/spec.version      = \"[0-9]+\.[0-9]+\.[0-9]+\"/spec.version      = \"{nextRelease.version}.0.0\"/g' WebRTC-lib.podspec")
+    nextVersion = f"{nextRelease.version}.0.0"
+    releaseAssetURL = (
+        f"https://github.com/{GITHUB_REPO}/releases/download/"
+        f"{nextVersion}/WebRTC-M{nextRelease.version}.xcframework.zip"
+    )
+    releaseURLPattern = (
+        r"https://github\.com/[^\"']+/releases/download/"
+        r"[0-9]+\.[0-9]+\.[0-9]+/WebRTC-M[0-9]+(?:\.[0-9]+)?"
+        r"\.xcframework\.zip"
+    )
+    replaceInFile("Package.swift", [
+        (releaseURLPattern, releaseAssetURL),
+        (r'checksum: "[0-9a-f]+"', f'checksum: "{buildMetadata.checksum}"'),
+    ])
+    replaceInFile("WebRTC-lib.podspec", [
+        (releaseURLPattern, releaseAssetURL),
+        (
+            r'spec\.version\s+= "[0-9]+\.[0-9]+\.[0-9]+"',
+            f'spec.version      = "{nextVersion}"'
+        ),
+        (r'checksum: "[0-9a-f]+"', f'checksum: "{buildMetadata.checksum}"'),
+    ])
+    replaceInFile("README.md", [
+        (
+            r'\.upToNextMajor\("[0-9]+\.[0-9]+\.[0-9]+',
+            f'.upToNextMajor("{nextVersion}'
+        ),
+    ])
     cartageFile = open("WebRTC.json", 'r')
 
     cartageJSON = json.loads(cartageFile.read())
-    cartageJSON[f'{nextRelease.version}.0.0'] = f'https://github.com/{GITHUB_REPO}/releases/download/{nextRelease.version}.0.0/WebRTC-M{nextRelease.version}.xcframework.zip'
+    cartageJSON[nextVersion] = releaseAssetURL
     cartageFile.close()
     cartageJSONWrite = open("WebRTC.json", 'w')
     cartageJSONWrite.write(json.dumps(cartageJSON, indent=4, sort_keys=True))
