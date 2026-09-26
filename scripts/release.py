@@ -120,22 +120,26 @@ def currentMilestoneFromGitHubReleases():
         print(f"❌ Unexpected GitHub releases response: {releases}")
         os._exit(os.EX_SOFTWARE)
 
+    publishedReleases = [
+        release for release in releases
+        if not release.get("draft") and release.get("published_at")
+    ]
     releaseVersions = [
         milestoneFromVersion(release.get("tag_name", ""))
-        for release in releases
+        for release in publishedReleases
     ]
     releaseVersions = [version for version in releaseVersions if version]
 
     if not releaseVersions:
         print(
-            f"Warning: no GitHub releases found for {GITHUB_REPO}; "
+            f"Warning: no published GitHub releases found for {GITHUB_REPO}; "
             "using repository metadata instead"
         )
         return currentMilestoneFromMetadata()
 
     latestReleaseVersion = max(releaseVersions)
     latestRelease = next(
-        release for release in releases
+        release for release in publishedReleases
         if milestoneFromVersion(release.get("tag_name", ""))
         == latestReleaseVersion
     )
@@ -400,9 +404,6 @@ def configureGitAuthor():
 
 def checkoutReleaseBranch(branch):
     runGit(["checkout", "-B", branch])
-
-    if remoteBranchExists(branch):
-        runGit(["branch", "--set-upstream-to", f"origin/{branch}", branch])
 
 def replaceInFile(filename, replacements):
     with open(filename, 'r') as f:
