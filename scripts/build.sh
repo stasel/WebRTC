@@ -487,7 +487,6 @@ aarch64-apple-tvos-sim
 aarch64-apple-tvos-sim
 aarch64-apple-visionos
 aarch64-apple-visionos-sim
-x86_64-apple-visionos-sim
 ''',
 )
 replace(
@@ -540,46 +539,13 @@ replace(
       }
     } else if (target_platform == "xros") {
       if (target_environment == "simulator") {
-        if (target_cpu == "x64") {
-          rust_abi_target = "x86_64-apple-visionos-sim"
-        } else {
-          rust_abi_target = "aarch64-apple-visionos-sim"
-        }
+        rust_abi_target = "aarch64-apple-visionos-sim"
       } else if (target_environment == "device") {
         rust_abi_target = "aarch64-apple-visionos"
       } else {
         assert(false, "unsupported target_environment=$target_environment")
       }
     } else {
-''',
-)
-replace(
-    "src/build/config/rust.gni",
-    '''    } else if (target_platform == "tvos") {
-      if (target_environment == "simulator") {
-        rust_abi_target = "x86_64-apple-tvos"
-      } else {
-        assert(false, "unsupported target_environment=$target_environment")
-      }
-    } else {
-      assert(false, "unsupported target_platform=$target_platform")
-    }
-''',
-    '''    } else if (target_platform == "tvos") {
-      if (target_environment == "simulator") {
-        rust_abi_target = "x86_64-apple-tvos"
-      } else {
-        assert(false, "unsupported target_environment=$target_environment")
-      }
-    } else if (target_platform == "xros") {
-      if (target_environment == "simulator") {
-        rust_abi_target = "x86_64-apple-visionos-sim"
-      } else {
-        assert(false, "unsupported target_environment=$target_environment")
-      }
-    } else {
-      assert(false, "unsupported target_platform=$target_platform")
-    }
 ''',
 )
 PY
