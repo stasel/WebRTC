@@ -203,6 +203,7 @@ def getBuildMetadata(outputDir):
         return BuildMetadata(filename = jsonData['file'], checksum = jsonData['checksum'], commit = jsonData['commit'], branch = jsonData['branch'], dsym = jsonData['dsym'])
 
 def createReleaseDraft(release, buildMetadata):
+    tag_name = f'{release.version}.0.0'
     body = f"Release notes: https://webrtc.googlesource.com/src.git/+log/refs/{buildMetadata.branch}/\n"
     body += f"WebRTC Branch: [{buildMetadata.branch}](https://chromium.googlesource.com/external/webrtc/+log/{buildMetadata.branch})\n"
     body += f"WebRTC Commit: `{buildMetadata.commit}`\n"
@@ -210,31 +211,115 @@ def createReleaseDraft(release, buildMetadata):
 
     fields = { 
         'name': f'M{release.version}',
-        'tag_name': f'{release.version}.0.0',
+        'tag_name': tag_name,
         'draft': True,
         'body': body
     }
-    return requests.post(
+    response = requests.post(
         f"https://api.github.com/repos/{GITHUB_REPO}/releases",
         json=fields,
         headers=githubHeaders()
-    ).json()
+    )
+    if response.status_code == requests.codes.created:
+        return response.json()
 
-def uploadReleaseAsset(url, assetLocalPath, assetName):
-    url = url.replace(u'{?name,label}','')
-    fileToUpload = open(assetLocalPath, 'rb')  
+    existingRelease = releaseByTag(tag_name)
+    if existingRelease:
+        print(f"Warning: release draft for {tag_name} already exists; reusing it")
+        patchResponse = requests.patch(
+            existingRelease["url"],
+            json=fields,
+            headers=githubHeaders()
+        )
+        if patchResponse.ok:
+            return patchResponse.json()
+        print(
+            "Warning: failed updating existing release draft: "
+            f"{patchResponse.status_code} {patchResponse.text}"
+        )
+        return existingRelease
+
+    print(
+        f"❌ Failed creating release draft: "
+        f"{response.status_code} {response.text}"
+    )
+    return {}
+
+def releaseByTag(tag_name):
+    page = 1
+    while True:
+        response = requests.get(
+            f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+            params={"per_page": 100, "page": page},
+            headers=githubHeaders()
+        )
+        if not response.ok:
+            print(
+                f"Warning: failed listing releases: "
+                f"{response.status_code} {response.text}"
+            )
+            return None
+
+        releases = response.json()
+        if not releases:
+            return None
+
+        for release in releases:
+            if release.get("tag_name") == tag_name:
+                return release
+
+        page += 1
+
+def deleteExistingReleaseAsset(release, assetName):
+    response = requests.get(release["assets_url"], headers=githubHeaders())
+    if not response.ok:
+        print(
+            f"Warning: failed listing release assets: "
+            f"{response.status_code} {response.text}"
+        )
+        return False
+
+    for asset in response.json():
+        if asset.get("name") != assetName:
+            continue
+
+        deleteResponse = requests.delete(asset["url"], headers=githubHeaders())
+        if deleteResponse.status_code not in (requests.codes.no_content, 404):
+            print(
+                f"Warning: failed deleting existing asset {assetName}: "
+                f"{deleteResponse.status_code} {deleteResponse.text}"
+            )
+            return False
+
+    return True
+
+def uploadReleaseAsset(release, assetLocalPath, assetName):
+    if not deleteExistingReleaseAsset(release, assetName):
+        return False
+
+    url = release["upload_url"].replace(u'{?name,label}','')
     size = os.stat(assetLocalPath).st_size
     params = {'name': assetName}
     headers = githubHeaders()
     headers['Content-Length'] = str(size)
     headers['Content-Type'] = 'Application/zip'
-    response = requests.post(url, params = params, data = fileToUpload, headers = headers)
+    with open(assetLocalPath, 'rb') as fileToUpload:
+        response = requests.post(
+            url,
+            params = params,
+            data = fileToUpload,
+            headers = headers
+        )
     success = response.status_code == requests.codes.created
     if not success:
-        print(response)
+        print(
+            f"❌ Failed uploading release asset {assetName}: "
+            f"{response.status_code} {response.text}"
+        )
     return success
 
 def createPullRequest(release, head):
+    owner = GITHUB_REPO.split("/")[0]
     body = { 
         'title': f'Release M{release.version}',
         'head': head,
@@ -247,9 +332,77 @@ def createPullRequest(release, head):
         headers=githubHeaders()
     )
     success = response.status_code == requests.codes.created
-    if not success:
-        print(response)
-    return success
+    if success:
+        return True
+
+    existingPr = pullRequestForBranch(f'{owner}:{head}')
+    if existingPr:
+        print(f"Warning: release pull request already exists: {existingPr['html_url']}")
+        return True
+
+    print(
+        f"❌ Failed creating pull request: "
+        f"{response.status_code} {response.text}"
+    )
+    return False
+
+def pullRequestForBranch(head):
+    response = requests.get(
+        f"https://api.github.com/repos/{GITHUB_REPO}/pulls",
+        params={"state": "open", "head": head, "base": "latest"},
+        headers=githubHeaders()
+    )
+    if not response.ok:
+        print(
+            f"Warning: failed checking existing pull requests: "
+            f"{response.status_code} {response.text}"
+        )
+        return None
+
+    pullRequests = response.json()
+    if pullRequests:
+        return pullRequests[0]
+
+    return None
+
+def runGit(args):
+    subprocess.run(["git", *args], check=True)
+
+def remoteBranchExists(branch):
+    return subprocess.run(
+        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    ).returncode == 0
+
+def pushReleaseBranch(branch):
+    if remoteBranchExists(branch):
+        runGit(["fetch", "origin", f"{branch}:refs/remotes/origin/{branch}"])
+        runGit(["push", "--force-with-lease", "origin", branch])
+    else:
+        runGit(["push", "origin", branch])
+
+def commitReleaseMetadata(version):
+    runGit(["add", "Package.swift", "WebRTC-lib.podspec", "README.md", "WebRTC.json"])
+    if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
+        print(f"Warning: release metadata for M{version} is already current")
+        return
+
+    runGit(["commit", "-m", f"Updated files for release M{version}"])
+
+def configureGitAuthor():
+    runGit(["config", "user.name", "github-actions[bot]"])
+    runGit([
+        "config",
+        "user.email",
+        "41898282+github-actions[bot]@users.noreply.github.com"
+    ])
+
+def checkoutReleaseBranch(branch):
+    runGit(["checkout", "-B", branch])
+
+    if remoteBranchExists(branch):
+        runGit(["branch", "--set-upstream-to", f"origin/{branch}", branch])
 
 def replaceInFile(filename, replacements):
     with open(filename, 'r') as f:
@@ -301,15 +454,14 @@ if __name__ == "__main__":
 
     # Upload asset to github
     print("➡️ Uploading assets to github...")
-    uploadURL = githubReleaseDraft['upload_url']
     uploadResultFramework = uploadReleaseAsset(
-        uploadURL, 
+        githubReleaseDraft,
         os.path.join(outputDir, buildMetadata.filename),
         f"WebRTC-M{nextRelease.version}.xcframework.zip"
     )
 
     uploadResultdSYM = uploadReleaseAsset(
-        uploadURL, 
+        githubReleaseDraft,
         os.path.join(outputDir, buildMetadata.dsym), 
         f"WebRTC-M{nextRelease.version}-dSYM.zip"
     )
@@ -323,7 +475,8 @@ if __name__ == "__main__":
     # Create new branch with code changes
     print("➡️ Creating local branch...")
     releaseBranch = f'release-M{nextRelease.version}'
-    os.system(f'git checkout -b {releaseBranch}')
+    configureGitAuthor()
+    checkoutReleaseBranch(releaseBranch)
 
     # Change code
     print("➡️ Applying code changes...")
@@ -367,9 +520,8 @@ if __name__ == "__main__":
 
     # Commit and push
     print("➡️ Committing and pushing code to remote...")
-    os.system(f'git add Package.swift WebRTC-lib.podspec README.md WebRTC.json')
-    os.system(f'git commit -m "Updated files for release M{nextRelease.version}"')
-    os.system(f'git push origin {releaseBranch}')
+    commitReleaseMetadata(nextRelease.version)
+    pushReleaseBranch(releaseBranch)
 
     # Create PR
     print("➡️ Creating pull request...")
