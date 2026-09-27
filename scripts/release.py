@@ -219,13 +219,6 @@ def createReleaseDraft(release, buildMetadata):
         'draft': True,
         'body': body
     }
-    response = requests.post(
-        f"https://api.github.com/repos/{GITHUB_REPO}/releases",
-        json=fields,
-        headers=githubHeaders()
-    )
-    if response.status_code == requests.codes.created:
-        return response.json()
 
     existingRelease = releaseByTag(tag_name)
     if existingRelease:
@@ -243,6 +236,14 @@ def createReleaseDraft(release, buildMetadata):
         )
         return existingRelease
 
+    response = requests.post(
+        f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+        json=fields,
+        headers=githubHeaders()
+    )
+    if response.status_code == requests.codes.created:
+        return response.json()
+
     print(
         f"❌ Failed creating release draft: "
         f"{response.status_code} {response.text}"
@@ -251,6 +252,7 @@ def createReleaseDraft(release, buildMetadata):
 
 def releaseByTag(tag_name):
     page = 1
+    matchingReleases = []
     while True:
         response = requests.get(
             f"https://api.github.com/repos/{GITHUB_REPO}/releases",
@@ -266,13 +268,27 @@ def releaseByTag(tag_name):
 
         releases = response.json()
         if not releases:
-            return None
+            break
 
         for release in releases:
             if release.get("tag_name") == tag_name:
-                return release
+                matchingReleases.append(release)
 
         page += 1
+
+    if not matchingReleases:
+        return None
+
+    matchingReleases.sort(
+        key=lambda release: release.get("created_at", ""),
+        reverse=True
+    )
+    if len(matchingReleases) > 1:
+        print(
+            f"Warning: found {len(matchingReleases)} releases for {tag_name}; "
+            "using the newest one"
+        )
+    return matchingReleases[0]
 
 def deleteExistingReleaseAsset(release, assetName):
     response = requests.get(release["assets_url"], headers=githubHeaders())
