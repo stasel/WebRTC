@@ -13,7 +13,6 @@ Pod::Spec.new do |spec|
   spec.author       = "Stasel"
   spec.ios.deployment_target = '12.0'
   spec.osx.deployment_target = '10.11'
-  spec.visionos.deployment_target = '2.0'
 
   spec.source       = { :http => "https://github.com/stasel/WebRTC/releases/download/153.0.0/WebRTC-M153.xcframework.zip" }
   spec.vendored_frameworks = "WebRTC.xcframework"
