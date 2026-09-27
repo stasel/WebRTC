@@ -220,7 +220,19 @@ def createReleaseDraft(release, buildMetadata):
         'body': body
     }
 
-    existingRelease = releaseByTag(tag_name)
+    matchingReleases = releasesByTag(tag_name)
+    publishedReleases = [
+        release for release in matchingReleases
+        if not release.get("draft")
+    ]
+    if publishedReleases:
+        print(
+            f"❌ Release {tag_name} already exists and is published; "
+            "refusing to modify published release assets"
+        )
+        return {}
+
+    existingRelease = newestRelease(matchingReleases)
     if existingRelease:
         print(f"Warning: release draft for {tag_name} already exists; reusing it")
         patchResponse = requests.patch(
@@ -250,7 +262,17 @@ def createReleaseDraft(release, buildMetadata):
     )
     return {}
 
-def releaseByTag(tag_name):
+def newestRelease(releases):
+    if not releases:
+        return None
+
+    releases.sort(
+        key=lambda release: release.get("created_at", ""),
+        reverse=True
+    )
+    return releases[0]
+
+def releasesByTag(tag_name):
     page = 1
     matchingReleases = []
     while True:
@@ -276,19 +298,12 @@ def releaseByTag(tag_name):
 
         page += 1
 
-    if not matchingReleases:
-        return None
-
-    matchingReleases.sort(
-        key=lambda release: release.get("created_at", ""),
-        reverse=True
-    )
     if len(matchingReleases) > 1:
         print(
             f"Warning: found {len(matchingReleases)} releases for {tag_name}; "
-            "using the newest one"
+            "checking whether one can be reused"
         )
-    return matchingReleases[0]
+    return matchingReleases
 
 def deleteExistingReleaseAsset(release, assetName):
     response = requests.get(release["assets_url"], headers=githubHeaders())
