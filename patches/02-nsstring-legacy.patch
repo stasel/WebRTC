@@ -1,5 +1,5 @@
 diff --git a/sdk/objc/api/peerconnection/RTCAudioTrack.mm b/sdk/objc/api/peerconnection/RTCAudioTrack.mm
-index 5ba53c84e9..2166b8cb34 100644
+index 5ba53c84e9a6b9fb790cffed101d200464df5136..2166b8cb348525a62b2907a2cb0f35c910387faa 100644
 --- a/sdk/objc/api/peerconnection/RTCAudioTrack.mm
 +++ b/sdk/objc/api/peerconnection/RTCAudioTrack.mm
 @@ -29,7 +29,7 @@
@@ -12,7 +12,7 @@ index 5ba53c84e9..2166b8cb34 100644
        factory.nativeFactory->CreateAudioTrack(nativeId,
                                                source.nativeAudioSource.get());
 diff --git a/sdk/objc/api/peerconnection/RTCDataChannel.mm b/sdk/objc/api/peerconnection/RTCDataChannel.mm
-index b52089a854..bf86444ff0 100644
+index b52089a854fad9b5004765f96b34586a960c9976..bf86444ff0cf89173b009eaf21950fd125ad1f49 100644
 --- a/sdk/objc/api/peerconnection/RTCDataChannel.mm
 +++ b/sdk/objc/api/peerconnection/RTCDataChannel.mm
 @@ -102,7 +102,7 @@ class DataChannelDelegateAdapter : public DataChannelObserver {
@@ -34,7 +34,7 @@ index b52089a854..bf86444ff0 100644
  
  - (BOOL)isNegotiated {
 diff --git a/sdk/objc/api/peerconnection/RTCDataChannelConfiguration.mm b/sdk/objc/api/peerconnection/RTCDataChannelConfiguration.mm
-index bf775b1afd..57bd96a750 100644
+index bf775b1afdd574f2b4cf19649518e0c0493f0dfa..57bd96a75006d39f07c35febabe929f021088e18 100644
 --- a/sdk/objc/api/peerconnection/RTCDataChannelConfiguration.mm
 +++ b/sdk/objc/api/peerconnection/RTCDataChannelConfiguration.mm
 @@ -53,11 +53,11 @@
@@ -52,10 +52,10 @@ index bf775b1afd..57bd96a750 100644
  
  - (BOOL)isNegotiated {
 diff --git a/sdk/objc/api/peerconnection/RTCDtmfSender.mm b/sdk/objc/api/peerconnection/RTCDtmfSender.mm
-index 524245061f..f238d5d335 100644
+index 56b43efbabb98468f49d53ec6818018890b4fbbc..927a6b1b3f74dee0aa0925f82fbaf2fc00ddd396 100644
 --- a/sdk/objc/api/peerconnection/RTCDtmfSender.mm
 +++ b/sdk/objc/api/peerconnection/RTCDtmfSender.mm
-@@ -33,11 +33,11 @@
+@@ -34,11 +34,11 @@
    int interToneGapMs =
        static_cast<int>(interToneGap * webrtc::kNumMillisecsPerSec);
    return _nativeDtmfSender->InsertDtmf(
@@ -70,11 +70,11 @@ index 524245061f..f238d5d335 100644
  
  - (NSTimeInterval)duration {
 diff --git a/sdk/objc/api/peerconnection/RTCIceCandidate.mm b/sdk/objc/api/peerconnection/RTCIceCandidate.mm
-index 241af297e7..f3cd9f5165 100644
+index 025601b29561fa72e6ba6932070a3add5845c5ac..cff141fe6e3db2478254e56b63288bc6006cc1c5 100644
 --- a/sdk/objc/api/peerconnection/RTCIceCandidate.mm
 +++ b/sdk/objc/api/peerconnection/RTCIceCandidate.mm
-@@ -53,11 +53,11 @@
-   candidate->ToString(&sdp);
+@@ -52,11 +52,11 @@
+   std::string sdp = candidate->ToString();
  
    RTC_OBJC_TYPE(RTCIceCandidate) *rtcCandidate =
 -      [self initWithSdp:[NSString stringForStdString:sdp]
@@ -88,17 +88,17 @@ index 241af297e7..f3cd9f5165 100644
    return rtcCandidate;
  }
  
-@@ -65,7 +65,7 @@
+@@ -64,7 +64,7 @@
    webrtc::SdpParseError error;
  
-   webrtc::IceCandidateInterface *candidate = webrtc::CreateIceCandidate(
+   webrtc::IceCandidate *candidate = webrtc::CreateIceCandidate(
 -      _sdpMid.stdString, _sdpMLineIndex, _sdp.stdString, &error);
 +      _sdpMid.rtcStdString, _sdpMLineIndex, _sdp.rtcStdString, &error);
  
    if (!candidate) {
      RTCLog(@"Failed to create ICE candidate: %s\nline: %s",
 diff --git a/sdk/objc/api/peerconnection/RTCIceCandidateErrorEvent.mm b/sdk/objc/api/peerconnection/RTCIceCandidateErrorEvent.mm
-index cef03f2f43..0b0b01dd5d 100644
+index cef03f2f438ac37c6e66b9d2877312b1ece6c1ce..0b0b01dd5db39c15e96f60b1aa696b3984c91ed8 100644
 --- a/sdk/objc/api/peerconnection/RTCIceCandidateErrorEvent.mm
 +++ b/sdk/objc/api/peerconnection/RTCIceCandidateErrorEvent.mm
 @@ -31,11 +31,11 @@
@@ -117,7 +117,7 @@ index cef03f2f43..0b0b01dd5d 100644
    return self;
  }
 diff --git a/sdk/objc/api/peerconnection/RTCIceServer.mm b/sdk/objc/api/peerconnection/RTCIceServer.mm
-index 96961e33d0..34e81ec099 100644
+index 96961e33d0bf4351aeb83cc6a4a1874343dd1c99..34e81ec0993472d94c187c86d5e92201acd1748f 100644
 --- a/sdk/objc/api/peerconnection/RTCIceServer.mm
 +++ b/sdk/objc/api/peerconnection/RTCIceServer.mm
 @@ -124,23 +124,23 @@
@@ -178,7 +178,7 @@ index 96961e33d0..34e81ec099 100644
    RTCTlsCertPolicy tlsCertPolicy;
  
 diff --git a/sdk/objc/api/peerconnection/RTCLegacyStatsReport.mm b/sdk/objc/api/peerconnection/RTCLegacyStatsReport.mm
-index 703b44c041..1f34ef8dc9 100644
+index 703b44c041f2fd6b57adc9331a55ffdf780ed65a..1f34ef8dc9a72d71420b2130122fdda3b21f7a3e 100644
 --- a/sdk/objc/api/peerconnection/RTCLegacyStatsReport.mm
 +++ b/sdk/objc/api/peerconnection/RTCLegacyStatsReport.mm
 @@ -37,17 +37,17 @@
@@ -204,7 +204,7 @@ index 703b44c041..1f34ef8dc9 100644
        // Not expecting duplicate keys.
        RTC_DCHECK(![values objectForKey:key]);
 diff --git a/sdk/objc/api/peerconnection/RTCMediaConstraints.mm b/sdk/objc/api/peerconnection/RTCMediaConstraints.mm
-index 5158b5905b..28445ed8d3 100644
+index 5158b5905bbca5be08ea01961a60015c267fe0a0..28445ed8d31dacec324e5213b453d5c07b3c71e1 100644
 --- a/sdk/objc/api/peerconnection/RTCMediaConstraints.mm
 +++ b/sdk/objc/api/peerconnection/RTCMediaConstraints.mm
 @@ -87,10 +87,10 @@ NSString *const kRTCMediaConstraintsValueFalse =
@@ -221,7 +221,7 @@ index 5158b5905b..28445ed8d3 100644
    }
    return nativeConstraints;
 diff --git a/sdk/objc/api/peerconnection/RTCMediaStream.mm b/sdk/objc/api/peerconnection/RTCMediaStream.mm
-index 60c256cc94..9bcc3f02c5 100644
+index 60c256cc94e4d8adc7bb4575371c6894bc8f3979..9bcc3f02c5bb16946b141aa8d4e5c327a3787307 100644
 --- a/sdk/objc/api/peerconnection/RTCMediaStream.mm
 +++ b/sdk/objc/api/peerconnection/RTCMediaStream.mm
 @@ -29,7 +29,7 @@
@@ -243,7 +243,7 @@ index 60c256cc94..9bcc3f02c5 100644
  
  - (void)addAudioTrack:(RTC_OBJC_TYPE(RTCAudioTrack) *)audioTrack {
 diff --git a/sdk/objc/api/peerconnection/RTCMediaStreamTrack.mm b/sdk/objc/api/peerconnection/RTCMediaStreamTrack.mm
-index 244b5e7207..7648eede0d 100644
+index 244b5e7207214457d252edf0862c7d248dde564f..7648eede0d5f191b7206c05c953dde67ecb50ffd 100644
 --- a/sdk/objc/api/peerconnection/RTCMediaStreamTrack.mm
 +++ b/sdk/objc/api/peerconnection/RTCMediaStreamTrack.mm
 @@ -26,11 +26,11 @@ NSString *const kRTCMediaStreamTrackKindVideo =
@@ -261,7 +261,7 @@ index 244b5e7207..7648eede0d 100644
  
  - (BOOL)isEnabled {
 diff --git a/sdk/objc/api/peerconnection/RTCMetricsSampleInfo.mm b/sdk/objc/api/peerconnection/RTCMetricsSampleInfo.mm
-index ea01350122..4c7597ded6 100644
+index ea01350122a86843254b3117a03863ba131ee77b..4c7597ded603cfe148256122ae6ee2ed6d2cdfab 100644
 --- a/sdk/objc/api/peerconnection/RTCMetricsSampleInfo.mm
 +++ b/sdk/objc/api/peerconnection/RTCMetricsSampleInfo.mm
 @@ -26,7 +26,7 @@
@@ -274,7 +274,7 @@ index ea01350122..4c7597ded6 100644
      _max = info.max;
      _bucketCount = info.bucket_count;
 diff --git a/sdk/objc/api/peerconnection/RTCPeerConnection+DataChannel.mm b/sdk/objc/api/peerconnection/RTCPeerConnection+DataChannel.mm
-index ea56598774..02ea9235c3 100644
+index ea5659877428f35c0286e6c2bce1aa621d7c65c4..02ea9235c3e88714e8cfab9d2c23900301c25fa3 100644
 --- a/sdk/objc/api/peerconnection/RTCPeerConnection+DataChannel.mm
 +++ b/sdk/objc/api/peerconnection/RTCPeerConnection+DataChannel.mm
 @@ -20,7 +20,7 @@
@@ -287,10 +287,10 @@ index ea56598774..02ea9235c3 100644
        configuration.nativeDataChannelInit;
    auto result = self.nativePeerConnection->CreateDataChannelOrError(
 diff --git a/sdk/objc/api/peerconnection/RTCPeerConnection.mm b/sdk/objc/api/peerconnection/RTCPeerConnection.mm
-index cc92c6b51f..fd463b2f7c 100644
+index 093e95706e83d698e6c467c69550ac3c76fd71dc..3319424cab20e767f569fe94f5898b9cafb11914 100644
 --- a/sdk/objc/api/peerconnection/RTCPeerConnection.mm
 +++ b/sdk/objc/api/peerconnection/RTCPeerConnection.mm
-@@ -66,7 +66,7 @@ class SetSessionDescriptionObserver
+@@ -67,7 +67,7 @@ class SetSessionDescriptionObserver
        completion_handler_(nil);
      } else {
        // TODO(hta): Add handling of error.type()
@@ -299,7 +299,7 @@ index cc92c6b51f..fd463b2f7c 100644
        NSError *err =
            [NSError errorWithDomain:kRTCPeerConnectionErrorDomain
                                code:kRTCPeerConnnectionSessionDescriptionError
-@@ -109,7 +109,7 @@ class CreateSessionDescriptionObserverAdapter
+@@ -110,7 +110,7 @@ class CreateSessionDescriptionObserverAdapter
    void OnFailure(RTCError error) override {
      RTC_DCHECK(completion_handler_);
      // TODO(hta): Add handling of error.type()
@@ -308,7 +308,7 @@ index cc92c6b51f..fd463b2f7c 100644
      NSError *err =
          [NSError errorWithDomain:kRTCPeerConnectionErrorDomain
                              code:kRTCPeerConnnectionSessionDescriptionError
-@@ -405,7 +405,7 @@ void PeerConnectionDelegateAdapter::OnIceSelectedCandidatePairChanged(
+@@ -400,7 +400,7 @@ void PeerConnectionDelegateAdapter::OnIceSelectedCandidatePairChanged(
    RTC_OBJC_TYPE(RTCIceCandidate) *remote_candidate =
        [[RTC_OBJC_TYPE(RTCIceCandidate) alloc]
            initWithNativeCandidate:&remote_candidate_wrapper];
@@ -317,7 +317,7 @@ index cc92c6b51f..fd463b2f7c 100644
    if ([delegate respondsToSelector:@selector
                  (peerConnection:
                      didChangeLocalCandidate:remoteCandidate:lastReceivedMs
-@@ -626,7 +626,7 @@ void PeerConnectionDelegateAdapter::OnRemoveTrack(
+@@ -621,7 +621,7 @@ void PeerConnectionDelegateAdapter::OnRemoveTrack(
          if (error.ok()) {
            completionHandler(nil);
          } else {
@@ -326,7 +326,7 @@ index cc92c6b51f..fd463b2f7c 100644
            NSError *err =
                [NSError errorWithDomain:kRTCPeerConnectionErrorDomain
                                    code:static_cast<NSInteger>(error.type())
-@@ -852,8 +852,8 @@ void PeerConnectionDelegateAdapter::OnRemoveTrack(
+@@ -845,8 +845,8 @@ void PeerConnectionDelegateAdapter::OnRemoveTrack(
  
  - (RTC_OBJC_TYPE(RTCRtpSender) *)senderWithKind:(NSString *)kind
                                         streamId:(NSString *)streamId {
@@ -334,11 +334,11 @@ index cc92c6b51f..fd463b2f7c 100644
 -  std::string nativeStreamId = [NSString stdStringForString:streamId];
 +  std::string nativeKind = [NSString rtcStdStringForString:kind];
 +  std::string nativeStreamId = [NSString rtcStdStringForString:streamId];
+   RTC_ALLOW_PLAN_B_DEPRECATION_BEGIN();
    webrtc::scoped_refptr<webrtc::RtpSenderInterface> nativeSender(
        _peerConnection->CreateSender(nativeKind, nativeStreamId));
-   return nativeSender ?
 diff --git a/sdk/objc/api/peerconnection/RTCRtcpParameters.mm b/sdk/objc/api/peerconnection/RTCRtcpParameters.mm
-index 7bb5d85594..9b6f22cd9c 100644
+index 7bb5d855945d6943e27d89bee8f16d2377b56e01..9b6f22cd9cde0d7800f3456f7860a9500accfe08 100644
 --- a/sdk/objc/api/peerconnection/RTCRtcpParameters.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtcpParameters.mm
 @@ -26,7 +26,7 @@
@@ -360,7 +360,7 @@ index 7bb5d85594..9b6f22cd9c 100644
    return parameters;
  }
 diff --git a/sdk/objc/api/peerconnection/RTCRtpCodecCapability.mm b/sdk/objc/api/peerconnection/RTCRtpCodecCapability.mm
-index 0cfe53a677..7fe4cef6b1 100644
+index 0cfe53a67720730e53344447c515e761939655cc..7fe4cef6b1d257287c177810db0d7f5779b9c4ae 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpCodecCapability.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpCodecCapability.mm
 @@ -39,7 +39,7 @@
@@ -409,7 +409,7 @@ index 0cfe53a677..7fe4cef6b1 100644
    }
    return rtpCodecCapability;
 diff --git a/sdk/objc/api/peerconnection/RTCRtpCodecParameters.mm b/sdk/objc/api/peerconnection/RTCRtpCodecParameters.mm
-index deb4738f5b..aa74bb1f2e 100644
+index deb4738f5bd7264683cac576bcdcf2cb1d2a0f22..aa74bb1f2e15e7286c9c8ae2309026ead426ee1d 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpCodecParameters.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpCodecParameters.mm
 @@ -51,7 +51,7 @@ const NSString *const kRTCH264CodecName = @(webrtc::kH264CodecName);
@@ -453,10 +453,10 @@ index deb4738f5b..aa74bb1f2e 100644
    }
    return parameters;
 diff --git a/sdk/objc/api/peerconnection/RTCRtpEncodingParameters.mm b/sdk/objc/api/peerconnection/RTCRtpEncodingParameters.mm
-index 49ae8a192c..52437e2929 100644
+index 6fda1a516025f52a01514ece345363313a00cb94..a122136e1fd07b2ed9d1e7ffed9e311582818f93 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpEncodingParameters.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpEncodingParameters.mm
-@@ -36,7 +36,7 @@
+@@ -37,7 +37,7 @@
    self = [super init];
    if (self) {
      if (!nativeParameters.rid.empty()) {
@@ -465,7 +465,16 @@ index 49ae8a192c..52437e2929 100644
      }
      _isActive = nativeParameters.active;
      if (nativeParameters.max_bitrate_bps) {
-@@ -72,7 +72,7 @@
+@@ -57,7 +57,7 @@
+     }
+     if (nativeParameters.scalability_mode) {
+       _scalabilityMode =
+-          [NSString stringForStdString:*nativeParameters.scalability_mode];
++          [NSString rtcStringForStdString:*nativeParameters.scalability_mode];
+     }
+     if (nativeParameters.scale_resolution_down_by) {
+       _scaleResolutionDownBy = [NSNumber
+@@ -77,7 +77,7 @@
  - (webrtc::RtpEncodingParameters)nativeParameters {
    webrtc::RtpEncodingParameters parameters;
    if (_rid != nil) {
@@ -474,8 +483,17 @@ index 49ae8a192c..52437e2929 100644
    }
    parameters.active = _isActive;
    if (_maxBitrateBps != nil) {
+@@ -95,7 +95,7 @@
+   }
+   if (_scalabilityMode != nil) {
+     parameters.scalability_mode = std::optional<std::string>(
+-        [NSString stdStringForString:_scalabilityMode]);
++        [NSString rtcStdStringForString:_scalabilityMode]);
+   }
+   if (_scaleResolutionDownBy != nil) {
+     parameters.scale_resolution_down_by =
 diff --git a/sdk/objc/api/peerconnection/RTCRtpHeaderExtension.mm b/sdk/objc/api/peerconnection/RTCRtpHeaderExtension.mm
-index c399619fee..01d15aad4c 100644
+index 88f26506f3e1b4433af5c138c4759c3f331bfd19..664ba24940ee1c1769a882a27bf89a69b0c514ba 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpHeaderExtension.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpHeaderExtension.mm
 @@ -27,7 +27,7 @@
@@ -484,7 +502,7 @@ index c399619fee..01d15aad4c 100644
    if (self) {
 -    _uri = [NSString stringForStdString:nativeParameters.uri];
 +    _uri = [NSString rtcStringForStdString:nativeParameters.uri];
-     _id = nativeParameters.id;
+     _id = nativeParameters.id.value();
      _encrypted = nativeParameters.encrypt;
    }
 @@ -36,7 +36,7 @@
@@ -493,11 +511,11 @@ index c399619fee..01d15aad4c 100644
    webrtc::RtpExtension extension;
 -  extension.uri = [NSString stdStringForString:_uri];
 +  extension.uri = [NSString rtcStdStringForString:_uri];
-   extension.id = _id;
+   extension.id = webrtc::RtpHeaderExtensionId(_id);
    extension.encrypt = _encrypted;
    return extension;
 diff --git a/sdk/objc/api/peerconnection/RTCRtpHeaderExtensionCapability.mm b/sdk/objc/api/peerconnection/RTCRtpHeaderExtensionCapability.mm
-index 9ecc3d0bc4..a68efda3b7 100644
+index ef40aca4df0748f9e408cf880d3f3321bae8c7b1..bdbcd6c90b0fa327a32155f60a6510249dd0be37 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpHeaderExtensionCapability.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpHeaderExtensionCapability.mm
 @@ -31,7 +31,7 @@
@@ -507,19 +525,26 @@ index 9ecc3d0bc4..a68efda3b7 100644
 -    _uri = [NSString stringForStdString:nativeRtpHeaderExtensionCapability.uri];
 +    _uri = [NSString rtcStringForStdString:nativeRtpHeaderExtensionCapability.uri];
      if (nativeRtpHeaderExtensionCapability.preferred_id) {
-       _preferredId = [NSNumber
-           numberWithInt:*nativeRtpHeaderExtensionCapability.preferred_id];
-@@ -56,7 +56,7 @@
- 
- - (webrtc::RtpHeaderExtensionCapability)nativeRtpHeaderExtensionCapability {
-   webrtc::RtpHeaderExtensionCapability rtpHeaderExtensionCapability;
--  rtpHeaderExtensionCapability.uri = [NSString stdStringForString:_uri];
-+  rtpHeaderExtensionCapability.uri = [NSString rtcStdStringForString:_uri];
+       _preferredId = [NSNumber numberWithInt:nativeRtpHeaderExtensionCapability
+                                                  .preferred_id->value()];
+@@ -59,13 +59,13 @@
+       nativeRtpTransceiverDirectionFromDirection:_direction];
    if (_preferredId != nil) {
-     rtpHeaderExtensionCapability.preferred_id =
-         std::optional<int>(_preferredId.intValue);
+     return webrtc::RtpHeaderExtensionCapability(
+-        [NSString stdStringForString:_uri],
++        [NSString rtcStdStringForString:_uri],
+         webrtc::RtpHeaderExtensionId(_preferredId.intValue),
+         _preferredEncrypted,
+         direction);
+   } else {
+     return webrtc::RtpHeaderExtensionCapability(
+-        [NSString stdStringForString:_uri], _preferredEncrypted, direction);
++        [NSString rtcStdStringForString:_uri], _preferredEncrypted, direction);
+   }
+ }
+ 
 diff --git a/sdk/objc/api/peerconnection/RTCRtpParameters.mm b/sdk/objc/api/peerconnection/RTCRtpParameters.mm
-index dd7b0deab5..d8bcc24dfb 100644
+index 2d192abd1c112d9c8431aac0757345dc8ac3538d..c1ff92a088831d36516ecb92e266afe5c83179b6 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpParameters.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpParameters.mm
 @@ -35,7 +35,7 @@
@@ -541,10 +566,10 @@ index dd7b0deab5..d8bcc24dfb 100644
    for (RTC_OBJC_TYPE(RTCRtpHeaderExtension) *
         headerExtension in _headerExtensions) {
 diff --git a/sdk/objc/api/peerconnection/RTCRtpReceiver.mm b/sdk/objc/api/peerconnection/RTCRtpReceiver.mm
-index 78de7c0a42..acd37fcf2d 100644
+index 19bae4b2f4f063e6b07622835179ef2917bd8cf1..d0730b6491617d59d8415bc45037140c1f7390a9 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpReceiver.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpReceiver.mm
-@@ -47,7 +47,7 @@ void RtpReceiverDelegateAdapter::OnFirstPacketReceived(
+@@ -62,7 +62,7 @@ void RtpReceiverDelegateAdapter::OnFirstPacketReceivedAfterReceptiveChange(
  @synthesize delegate = _delegate;
  
  - (NSString *)receiverId {
@@ -554,7 +579,7 @@ index 78de7c0a42..acd37fcf2d 100644
  
  - (RTC_OBJC_TYPE(RTCRtpParameters) *)parameters {
 diff --git a/sdk/objc/api/peerconnection/RTCRtpSender.mm b/sdk/objc/api/peerconnection/RTCRtpSender.mm
-index f3135c6e5c..c52f1a69a4 100644
+index f3135c6e5ca6d320c3882882ba0866cd0c2ba146..c52f1a69a4f5fe3c44de76d1818d8ea3d4fe60ad 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpSender.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpSender.mm
 @@ -27,7 +27,7 @@
@@ -576,7 +601,7 @@ index f3135c6e5c..c52f1a69a4 100644
    return streamIds;
  }
 diff --git a/sdk/objc/api/peerconnection/RTCRtpTransceiver.mm b/sdk/objc/api/peerconnection/RTCRtpTransceiver.mm
-index faa6b64dd4..c25bf432b3 100644
+index faa6b64dd42646b57c4a996b2978af3a5dc08475..c25bf432b3696fc462c8f22ae0cc99a01d9ba2f6 100644
 --- a/sdk/objc/api/peerconnection/RTCRtpTransceiver.mm
 +++ b/sdk/objc/api/peerconnection/RTCRtpTransceiver.mm
 @@ -65,7 +65,7 @@ NSString *const kRTCRtpTransceiverErrorDomain = @"org.webrtc.RTCRtpTranceiver";
@@ -589,7 +614,7 @@ index faa6b64dd4..c25bf432b3 100644
      return nil;
    }
 diff --git a/sdk/objc/api/peerconnection/RTCSessionDescription.mm b/sdk/objc/api/peerconnection/RTCSessionDescription.mm
-index a62f4c7f29..367398a7a2 100644
+index b81946fe2a649fe5b378928ffbe36b87d04ad3b4..1c9daf0c60b45a474fc6abb97d4e6156b49a890f 100644
 --- a/sdk/objc/api/peerconnection/RTCSessionDescription.mm
 +++ b/sdk/objc/api/peerconnection/RTCSessionDescription.mm
 @@ -23,11 +23,11 @@
@@ -617,7 +642,7 @@ index a62f4c7f29..367398a7a2 100644
      RTCLogError(@"Failed to create session description: %s\nline: %s",
 @@ -72,7 +72,7 @@
    nativeDescription->ToString(&sdp);
-   RTCSdpType type = [[self class] typeForStdString:nativeDescription->type()];
+   RTCSdpType type = [[self class] typeForSdpType:nativeDescription->GetType()];
  
 -  return [self initWithType:type sdp:[NSString stringForStdString:sdp]];
 +  return [self initWithType:type sdp:[NSString rtcStringForStdString:sdp]];
@@ -625,7 +650,7 @@ index a62f4c7f29..367398a7a2 100644
  
  + (std::string)stdStringForType:(RTCSdpType)type {
 diff --git a/sdk/objc/api/peerconnection/RTCStatisticsReport.mm b/sdk/objc/api/peerconnection/RTCStatisticsReport.mm
-index 68aac57f97..f2286c6342 100644
+index 68aac57f97678d0079c7535721d9c73bfcb462ef..f2286c6342328bd4afc44554f0144fb6634db336 100644
 --- a/sdk/objc/api/peerconnection/RTCStatisticsReport.mm
 +++ b/sdk/objc/api/peerconnection/RTCStatisticsReport.mm
 @@ -35,7 +35,7 @@ NSObject *ValueFromStatsAttribute(const Attribute &attribute) {
@@ -674,7 +699,7 @@ index 68aac57f97..f2286c6342 100644
      _type = [NSString stringWithCString:statistics.type()
                                 encoding:NSUTF8StringEncoding];
 diff --git a/sdk/objc/api/peerconnection/RTCVideoCodecInfo+Private.mm b/sdk/objc/api/peerconnection/RTCVideoCodecInfo+Private.mm
-index 8a977a3447..78f6d0ca7d 100644
+index 8a977a3447909d08900a3349889adde35bcfb64d..78f6d0ca7d2dcc6ec093513e34e46a1ac08aa012 100644
 --- a/sdk/objc/api/peerconnection/RTCVideoCodecInfo+Private.mm
 +++ b/sdk/objc/api/peerconnection/RTCVideoCodecInfo+Private.mm
 @@ -21,8 +21,8 @@
@@ -726,7 +751,7 @@ index 8a977a3447..78f6d0ca7d 100644
  
  @end
 diff --git a/sdk/objc/api/peerconnection/RTCVideoTrack.mm b/sdk/objc/api/peerconnection/RTCVideoTrack.mm
-index 5411a22dfd..381feb1617 100644
+index 5411a22dfd6a2672bd3d8e44e55ff19a8f8ad50a..381feb161766a5d6673cd50b8af03cf0a6997f15 100644
 --- a/sdk/objc/api/peerconnection/RTCVideoTrack.mm
 +++ b/sdk/objc/api/peerconnection/RTCVideoTrack.mm
 @@ -30,7 +30,7 @@
@@ -738,8 +763,22 @@ index 5411a22dfd..381feb1617 100644
    webrtc::scoped_refptr<webrtc::VideoTrackInterface> track =
        factory.nativeFactory->CreateVideoTrack(source.nativeVideoSource,
                                                nativeId);
+diff --git a/sdk/objc/components/video_codec/RTCDefaultVideoEncoderFactory.mm b/sdk/objc/components/video_codec/RTCDefaultVideoEncoderFactory.mm
+index 3cc21218045ff4eb5bb87d129a0215baf3b080d6..64e84290b05eed7d6da96901f4b19c3561e83db8 100644
+--- a/sdk/objc/components/video_codec/RTCDefaultVideoEncoderFactory.mm
++++ b/sdk/objc/components/video_codec/RTCDefaultVideoEncoderFactory.mm
+@@ -91,7 +91,8 @@
+       scalabilityMode:(nullable NSString *)scalabilityMode {
+   std::optional<webrtc::ScalabilityMode> mode;
+   if (scalabilityMode) {
+-    mode = webrtc::ScalabilityModeStringToEnum([scalabilityMode stdString]);
++    mode =
++        webrtc::ScalabilityModeStringToEnum([scalabilityMode rtcStdString]);
+     if (!mode.has_value()) {
+       return [[RTC_OBJC_TYPE(RTCVideoEncoderCodecSupport) alloc]
+           initWithSupported:NO];
 diff --git a/sdk/objc/components/video_codec/RTCH264ProfileLevelId.mm b/sdk/objc/components/video_codec/RTCH264ProfileLevelId.mm
-index 2dc66d1514..a55dc0e3dc 100644
+index 2dc66d1514a409807f145eca846809fba06b587a..a55dc0e3dc8dc43aba0a96b1a0db6822266b1565 100644
 --- a/sdk/objc/components/video_codec/RTCH264ProfileLevelId.mm
 +++ b/sdk/objc/components/video_codec/RTCH264ProfileLevelId.mm
 @@ -45,7 +45,7 @@ NSString *MaxSupportedLevelForProfile(webrtc::H264Profile profile) {
@@ -752,7 +791,7 @@ index 2dc66d1514..a55dc0e3dc 100644
    }
    return nil;
 diff --git a/sdk/objc/helpers/NSString+StdString.h b/sdk/objc/helpers/NSString+StdString.h
-index b0324e8a19..0a34e694aa 100644
+index b0324e8a190e2dc8b686039bfde33b2ec42adfc4..0a34e694aadfe78d75e1461a76a26ef15108e547 100644
 --- a/sdk/objc/helpers/NSString+StdString.h
 +++ b/sdk/objc/helpers/NSString+StdString.h
 @@ -18,10 +18,10 @@ NS_ASSUME_NONNULL_BEGIN
@@ -770,7 +809,7 @@ index b0324e8a19..0a34e694aa 100644
  @end
  
 diff --git a/sdk/objc/helpers/NSString+StdString.mm b/sdk/objc/helpers/NSString+StdString.mm
-index 5c2d208b9c..93dca0e77a 100644
+index 5c2d208b9cfcddb3389ae39f9e018b209aa40e08..93dca0e77a3b6788a4ccc299981edbe2bb69cb94 100644
 --- a/sdk/objc/helpers/NSString+StdString.mm
 +++ b/sdk/objc/helpers/NSString+StdString.mm
 @@ -14,17 +14,17 @@
@@ -796,7 +835,7 @@ index 5c2d208b9c..93dca0e77a 100644
    // using length.
    return [[NSString alloc] initWithBytes:stdString.data()
 diff --git a/sdk/objc/native/src/objc_video_decoder_factory.mm b/sdk/objc/native/src/objc_video_decoder_factory.mm
-index 2061946776..2a1d259e59 100644
+index 8eceb4c4fc390dd14fc59cf35ee8b8b3ebf3da3e..1eac8aa575301ec5c63af63bf84ffbeedcf34802 100644
 --- a/sdk/objc/native/src/objc_video_decoder_factory.mm
 +++ b/sdk/objc/native/src/objc_video_decoder_factory.mm
 @@ -36,7 +36,7 @@ class ObjCVideoDecoder : public VideoDecoder {
@@ -809,7 +848,7 @@ index 2061946776..2a1d259e59 100644
    bool Configure(const Settings &settings) override {
      return [decoder_ startDecodeWithNumberOfCores:settings.number_of_cores()] ==
 diff --git a/sdk/objc/native/src/objc_video_encoder_factory.mm b/sdk/objc/native/src/objc_video_encoder_factory.mm
-index 5d46915b22..11174aa749 100644
+index ba2c5b0c8a1f824499a65cd34fc841b089514072..af0c9f47f1a6643598cd3fc4a63f896fcc738094 100644
 --- a/sdk/objc/native/src/objc_video_encoder_factory.mm
 +++ b/sdk/objc/native/src/objc_video_encoder_factory.mm
 @@ -41,7 +41,7 @@ class ObjCVideoEncoder : public VideoEncoder {
@@ -822,7 +861,7 @@ index 5d46915b22..11174aa749 100644
    int32_t InitEncode(const VideoCodec *codec_settings,
                       const Settings &encoder_settings) override {
 diff --git a/sdk/objc/unittests/RTCDataChannelConfigurationTest.mm b/sdk/objc/unittests/RTCDataChannelConfigurationTest.mm
-index ccebd74198..61fc2c9172 100644
+index e2a0ab0e7c6d6f8e64357cc50b7a01cfd29f3968..aeac806937ed926fcbcc8a95e65b8c65db281fc2 100644
 --- a/sdk/objc/unittests/RTCDataChannelConfigurationTest.mm
 +++ b/sdk/objc/unittests/RTCDataChannelConfigurationTest.mm
 @@ -45,7 +45,7 @@
@@ -835,19 +874,19 @@ index ccebd74198..61fc2c9172 100644
  
  @end
 diff --git a/sdk/objc/unittests/RTCIceCandidateTest.mm b/sdk/objc/unittests/RTCIceCandidateTest.mm
-index 4cdd317a3c..40f5b70a22 100644
+index b89a55de6db7ce14e0729c2a729ad2a3cfc23ac2..6eb9d668a1ce25ae3323b1116e4cb17eb1886c5e 100644
 --- a/sdk/objc/unittests/RTCIceCandidateTest.mm
 +++ b/sdk/objc/unittests/RTCIceCandidateTest.mm
-@@ -41,7 +41,7 @@
+@@ -40,7 +40,7 @@
+   EXPECT_EQ(0, nativeCandidate->sdp_mline_index());
  
-   std::string sdpString;
-   nativeCandidate->ToString(&sdpString);
+   std::string sdpString = nativeCandidate->ToString();
 -  EXPECT_EQ(sdp.stdString, sdpString);
 +  EXPECT_EQ(sdp.rtcStdString, sdpString);
  }
  
  - (void)testInitFromNativeCandidate {
-@@ -58,7 +58,7 @@
+@@ -57,7 +57,7 @@
    EXPECT_TRUE([@"audio" isEqualToString:iceCandidate.sdpMid]);
    EXPECT_EQ(0, iceCandidate.sdpMLineIndex);
  
@@ -857,7 +896,7 @@ index 4cdd317a3c..40f5b70a22 100644
  
  @end
 diff --git a/sdk/objc/unittests/RTCIceServerTest.mm b/sdk/objc/unittests/RTCIceServerTest.mm
-index 29163961da..1db28d8fea 100644
+index 0d1919d8bdb1d2495a920cb0ba478c8c05e44477..f84bd6508770016dd369ba2992ebf246eaef508a 100644
 --- a/sdk/objc/unittests/RTCIceServerTest.mm
 +++ b/sdk/objc/unittests/RTCIceServerTest.mm
 @@ -128,10 +128,10 @@
@@ -876,7 +915,7 @@ index 29163961da..1db28d8fea 100644
    EXPECT_EQ(2u, iceServer.tlsEllipticCurves.count);
  }
 diff --git a/sdk/objc/unittests/RTCMediaConstraintsTest.mm b/sdk/objc/unittests/RTCMediaConstraintsTest.mm
-index 60d68f3e31..da0cd517f9 100644
+index 7b67147d399d6f621b4f8ab68e0703268d599c33..45d01be07725222ed623f54ae4d83499993e52f7 100644
 --- a/sdk/objc/unittests/RTCMediaConstraintsTest.mm
 +++ b/sdk/objc/unittests/RTCMediaConstraintsTest.mm
 @@ -53,9 +53,9 @@
@@ -892,10 +931,10 @@ index 60d68f3e31..da0cd517f9 100644
  }
  
 diff --git a/sdk/objc/unittests/RTCSessionDescriptionTest.mm b/sdk/objc/unittests/RTCSessionDescriptionTest.mm
-index 0927da534f..3fe1618f40 100644
+index 790fcd7bdaf0dbdf13379291be0f70f623c2bf41..9a7c9a22d8e98b0b189bbabb6f06d273436f97c7 100644
 --- a/sdk/objc/unittests/RTCSessionDescriptionTest.mm
 +++ b/sdk/objc/unittests/RTCSessionDescriptionTest.mm
-@@ -43,12 +43,12 @@
+@@ -44,12 +44,12 @@
  
    std::string sdp;
    nativeDescription->ToString(&sdp);
@@ -911,38 +950,29 @@ index 0927da534f..3fe1618f40 100644
    RTC_OBJC_TYPE(RTCSessionDescription) *description =
        [[RTC_OBJC_TYPE(RTCSessionDescription) alloc]
 diff --git a/test/ios/test_support.mm b/test/ios/test_support.mm
-index 56a2754b9b..7f22e0b904 100644
+index aca688c24c9f245e2060c30a184f2cfc77fa5c2b..1f4d1a2c53852830a9c3c5084d8bcf09334dd946 100644
 --- a/test/ios/test_support.mm
 +++ b/test/ios/test_support.mm
-@@ -113,7 +113,7 @@ static std::optional<std::vector<std::string>> g_metrics_to_plot;
+@@ -110,7 +110,7 @@ static std::optional<std::vector<std::string>> g_metrics_to_plot;
  
-         exporters.push_back(
-             std::make_unique<webrtc::test::ChromePerfDashboardMetricsExporter>(
--                [NSString stdStringForString:outputPath]));
-+                [NSString rtcStdStringForString:outputPath]));
-       }
+       exporters.push_back(
+           std::make_unique<webrtc::test::ChromePerfDashboardMetricsExporter>(
+-              [NSString stdStringForString:outputPath]));
++              [NSString rtcStdStringForString:outputPath]));
      }
-     if (!g_webrtc_test_metrics_output_path.empty()) {
-@@ -130,7 +130,7 @@ static std::optional<std::vector<std::string>> g_metrics_to_plot;
-         exporters.push_back(
-             std::make_unique<webrtc::test::MetricsSetProtoFileExporter>(
-                 webrtc::test::MetricsSetProtoFileExporter::Options(
--                    [NSString stdStringForString:outputPath])));
-+                    [NSString rtcStdStringForString:outputPath])));
-       }
+   }
+   if (!g_webrtc_test_metrics_output_path.empty()) {
+@@ -126,7 +126,7 @@ static std::optional<std::vector<std::string>> g_metrics_to_plot;
+       exporters.push_back(
+           std::make_unique<webrtc::test::MetricsSetProtoFileExporter>(
+               webrtc::test::MetricsSetProtoFileExporter::Options(
+-                  [NSString stdStringForString:outputPath])));
++                  [NSString rtcStdStringForString:outputPath])));
      }
-   } else {
-@@ -148,7 +148,7 @@ static std::optional<std::vector<std::string>> g_metrics_to_plot;
-             [outputDirectories[0] stringByAppendingPathComponent:fileName];
- 
-         if (!webrtc::test::WritePerfResults(
--                [NSString stdStringForString:outputPath])) {
-+                [NSString rtcStdStringForString:outputPath])) {
-           return 1;
-         }
-       }
+   }
+   webrtc::test::ExportPerfMetric(*webrtc::test::GetGlobalMetricsLogger(),
 diff --git a/test/testsupport/ios_file_utils.mm b/test/testsupport/ios_file_utils.mm
-index 5c5c7f092a..06b27c4d59 100644
+index 5c5c7f092a06f4ca9e3de4668c1296b260bbc0ca..06b27c4d59f7abae4a9cb2945bbabdcf2a2401b4 100644
 --- a/test/testsupport/ios_file_utils.mm
 +++ b/test/testsupport/ios_file_utils.mm
 @@ -33,14 +33,14 @@ std::string IOSResourcePath(absl::string_view name,

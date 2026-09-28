@@ -1,19 +1,23 @@
 diff --git a/sdk/objc/components/audio/RTCAudioSessionConfiguration.m b/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
-index 74de6b5ce2..4eb54a62e0 100644
+index c583868291d45ecba9ad3f58087d0eeeedcec095..1feac2df59b3fb7f462fdf79b9f7648809a68ed1 100644
 --- a/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
 +++ b/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
-@@ -60,7 +60,9 @@ static RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *gWebRTCConfiguration = nil;
+@@ -60,11 +60,13 @@ static RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *gWebRTCConfiguration = nil;
      // nonmixable, hence activating the session will interrupt any other
      // audio sessions which are also nonmixable.
      _category = AVAudioSessionCategoryPlayAndRecord;
-+    #if !TARGET_OS_TV
++#if !TARGET_OS_TV
+ #if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
+     _categoryOptions = AVAudioSessionCategoryOptionAllowBluetoothHFP;
+ #else
+     // Use the deprecated option on older SDKs.
      _categoryOptions = AVAudioSessionCategoryOptionAllowBluetooth;
-+    #endif
++#endif
+ #endif
  
      // Specify mode for two-way voice communication (e.g. VoIP).
-     _mode = AVAudioSessionModeVoiceChat;
 diff --git a/sdk/objc/components/capturer/RTCCameraVideoCapturer.h b/sdk/objc/components/capturer/RTCCameraVideoCapturer.h
-index 5185fa866e..d5297983ba 100644
+index 5185fa866e5147c3acee7f27f95143a505505d3f..d5297983ba7a85bdfd6cbb0bd1c1e08e39384f5d 100644
 --- a/sdk/objc/components/capturer/RTCCameraVideoCapturer.h
 +++ b/sdk/objc/components/capturer/RTCCameraVideoCapturer.h
 @@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
@@ -25,7 +29,7 @@ index 5185fa866e..d5297983ba 100644
  @interface RTC_OBJC_TYPE (RTCCameraVideoCapturer) : RTC_OBJC_TYPE(RTCVideoCapturer)
  
 diff --git a/sdk/objc/components/capturer/RTCCameraVideoCapturer.m b/sdk/objc/components/capturer/RTCCameraVideoCapturer.m
-index ff55bd7f19..bd4a0e2338 100644
+index ff55bd7f194fe2c604517b3e3860d0a1326b861f..bd4a0e2338c5e3222362f30aa04dadaab0e5257d 100644
 --- a/sdk/objc/components/capturer/RTCCameraVideoCapturer.m
 +++ b/sdk/objc/components/capturer/RTCCameraVideoCapturer.m
 @@ -15,7 +15,7 @@
@@ -137,10 +141,10 @@ index ff55bd7f19..bd4a0e2338 100644
  #endif
  }
 diff --git a/sdk/objc/components/renderer/metal/RTCMTLRenderer.h b/sdk/objc/components/renderer/metal/RTCMTLRenderer.h
-index 84aa3fe7fc..3a56774799 100644
+index f513fccba1338623c0aaf46826dbce14f8dd822d..ff33cb91d8b0bbfd6b033415ddfcb1cd2ad5f537 100644
 --- a/sdk/objc/components/renderer/metal/RTCMTLRenderer.h
 +++ b/sdk/objc/components/renderer/metal/RTCMTLRenderer.h
-@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
   * for performing cleanups.
   */
  
@@ -150,7 +154,7 @@ index 84aa3fe7fc..3a56774799 100644
  #else
  - (BOOL)addRenderingDestination:(__kindof NSView *)view;
 diff --git a/sdk/objc/helpers/RTCCameraPreviewView.h b/sdk/objc/helpers/RTCCameraPreviewView.h
-index 788e8c3e3e..3db184fdbb 100644
+index 788e8c3e3eb4be100c5552c500178340d316dd46..3db184fdbb4e6738ebbbb84f61cf4386aab56536 100644
 --- a/sdk/objc/helpers/RTCCameraPreviewView.h
 +++ b/sdk/objc/helpers/RTCCameraPreviewView.h
 @@ -18,6 +18,7 @@
@@ -162,43 +166,68 @@ index 788e8c3e3e..3db184fdbb 100644
  @interface RTC_OBJC_TYPE (RTCCameraPreviewView) : UIView
  
 diff --git a/sdk/objc/helpers/RTCCameraPreviewView.m b/sdk/objc/helpers/RTCCameraPreviewView.m
-index 92c3cd2635..8d656ac825 100644
+index 3314322b992db1e8cfa217de1ae8d8c794df4f5b..d56ca5fd63879d6e7c3793fee0b5b37309d18e67 100644
 --- a/sdk/objc/helpers/RTCCameraPreviewView.m
 +++ b/sdk/objc/helpers/RTCCameraPreviewView.m
-@@ -81,6 +81,7 @@
- 
- - (void)setCorrectVideoOrientation {
-   // Get current device orientation.
-+  #if TARGET_OS_IPHONE && !TARGET_OS_TV
-   UIDeviceOrientation deviceOrientation = [UIDevice currentDevice].orientation;
-   AVCaptureVideoPreviewLayer *previewLayer = [self previewLayer];
- 
-@@ -103,23 +104,28 @@
-     // If device orientation switches to FaceUp or FaceDown, don't change video
-     // orientation.
-   }
-+  #endif
+@@ -80,10 +80,11 @@
  }
  
+ - (void)setCorrectVideoOrientation {
+-  if (@available(iOS 17, *)) {
++  if (@available(iOS 17, tvOS 17, *)) {
+     [self modifyVideoAngle];
+   }
+-#if !defined(__IPHONE_17_0) || __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0
++#if !TARGET_OS_TV && \
++    (!defined(__IPHONE_17_0) || __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0)
+   else {
+     [self modifyVideoOrientation];
+   }
+@@ -93,25 +94,29 @@
  #pragma mark - Private
  
  - (void)addOrientationObserver {
-+  #if TARGET_OS_IPHONE && !TARGET_OS_TV
++#if !TARGET_OS_TV
    [[NSNotificationCenter defaultCenter]
        addObserver:self
           selector:@selector(orientationChanged:)
               name:UIDeviceOrientationDidChangeNotification
             object:nil];
-+  #endif
++#endif
  }
  
  - (void)removeOrientationObserver {
-+  #if TARGET_OS_IPHONE && !TARGET_OS_TV
++#if !TARGET_OS_TV
    [[NSNotificationCenter defaultCenter]
        removeObserver:self
                  name:UIDeviceOrientationDidChangeNotification
                object:nil];
-+  #endif
++#endif
  }
  
  - (AVCaptureVideoPreviewLayer *)previewLayer {
+   return (AVCaptureVideoPreviewLayer *)self.layer;
+ }
+ 
+-- (void)modifyVideoAngle API_AVAILABLE(ios(17.0)) {
++- (void)modifyVideoAngle API_AVAILABLE(ios(17.0), tvos(17.0)) {
+   AVCaptureDeviceInput* captureSessionInput =
+       _captureSession.inputs.firstObject;
+   AVCaptureDevice* camera = captureSessionInput.device;
+@@ -128,7 +133,8 @@
+   }
+ }
+ 
+-#if !defined(__IPHONE_17_0) || __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0
++#if !TARGET_OS_TV && \
++    (!defined(__IPHONE_17_0) || __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_17_0)
+ - (void)modifyVideoOrientation {
+   // Get current device orientation.
+   UIDeviceOrientation deviceOrientation = [UIDevice currentDevice].orientation;
+@@ -156,4 +162,4 @@
+ }
+ #endif
+ 
+-@end
+\ No newline at end of file
++@end

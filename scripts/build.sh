@@ -9,7 +9,7 @@
 # Configs
 DEBUG="${DEBUG:-false}"
 BUILD_VP9="${BUILD_VP9:-true}"
-BRANCH="${BRANCH:-cec4daea7ed5da94fc38d790bd12694c86865447}"
+BRANCH="${BRANCH:-9ea5afcad008b940468c2a15aec339592cf5a935}"
 IOS="${IOS:-true}"
 TVOS="${TVOS:-true}"
 MACOS="${MACOS:-true}"
@@ -171,7 +171,7 @@ git fetch --all || exit 1
 git checkout $BRANCH || exit 1
 for filename in ../patches/*.patch; do
     echo "Applying patch $filename..."
-    git apply $filename
+    git apply "$filename" || exit 1
 done
 
 cd ..
@@ -269,11 +269,13 @@ if [[ "$TVOS" = true ]]; then
     plist_add_library $LIB_TVOS_INDEX $TVOS_LIB_IDENTIFIER "tvos"
     plist_add_library $LIB_TVOS_SIMULATOR_INDEX $TVOS_SIM_LIB_IDENTIFIER "tvos" "simulator"
 
-    cp -r out/tvos-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}"
-    cp -r out/tvos-arm64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/tvos-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${TVOS_SIM_LIB_IDENTIFIER}"
+    stage_dsym "${TVOS_LIB_IDENTIFIER}" "tvos-arm64-device"
+    stage_dsym "${TVOS_SIM_LIB_IDENTIFIER}" "tvos-arm64-simulator"
 
-    LIPO_TVOS_FLAGS="out/tvos-arm64-device/WebRTC.framework/WebRTC"
-    LIPO_TVOS_SIM_FLAGS="out/tvos-arm64-simulator/WebRTC.framework/WebRTC"
+    LIPO_TVOS_FLAGS="${OUTPUT_DIR}/tvos-arm64-device/WebRTC.framework/WebRTC"
+    LIPO_TVOS_SIM_FLAGS="${OUTPUT_DIR}/tvos-arm64-simulator/WebRTC.framework/WebRTC"
 
     plist_add_architecture $LIB_TVOS_INDEX "arm64"
     plist_add_architecture $LIB_TVOS_SIMULATOR_INDEX "arm64"
