@@ -4,7 +4,7 @@
 ## Created by Stasel
 ## BSD-3 License
 ## 
-## Example usage: MACOS=true IOS=true BUILD_VP9=true sh build.sh
+## Example usage (from the repository root): BRANCH=branch-heads/7727 MACOS=true IOS=true sh scripts/build.sh
 
 # Configs
 DEBUG="${DEBUG:-false}"
@@ -15,10 +15,12 @@ TVOS="${TVOS:-true}"
 MACOS="${MACOS:-true}"
 MAC_CATALYST="${MAC_CATALYST:-true}"
 
-OUTPUT_DIR="./out"
-XCFRAMEWORK_DIR="out/WebRTC.xcframework"
-COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_exclude_audio_processing_module=true rtc_include_internal_audio_device=false"
+ROOT_DIR="$(pwd)"
+OUTPUT_DIR="${ROOT_DIR}/out"
+XCFRAMEWORK_DIR="${OUTPUT_DIR}/WebRTC.xcframework"
+COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=true use_lld=true rtc_exclude_audio_processing_module=true rtc_include_internal_audio_device=false rtc_system_openh264=true rtc_use_h265=true"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
+
 
 build_iOS() {
     local arch=$1
@@ -85,10 +87,11 @@ build_macOS() {
 
 # Catalyst builds are not working properly yet. 
 # See: https://groups.google.com/g/discuss-webrtc/c/VZXS4V4mSY4
+# Must link Catalyst with Apple's linker instead of lld (use_lld=false)
 build_catalyst() {
     local arch=$1
     local gen_dir="${OUTPUT_DIR}/catalyst-${arch}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false use_lld=false"
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
@@ -115,6 +118,36 @@ plist_add_architecture() {
     "$PLISTBUDDY_EXEC" -c "Add :AvailableLibraries:${index}:SupportedArchitectures: string ${arch}"  "${INFO_PLIST}"
 }
 
+fix_privacy_manifest() {
+    local framework=$1
+    local nested="${framework}/Versions/A/Versions"
+    if [ -f "${nested}/A/Resources/PrivacyInfo.xcprivacy" ]; then
+        mv "${nested}/A/Resources/PrivacyInfo.xcprivacy" "${framework}/Versions/A/Resources/" || exit 1
+        rm -rf "${nested}"
+    fi
+}
+
+# Stage the dSYM for one XCFramework slice, named after its library identifier.
+# Pass a second build directory when the slice's binary is lipo'd from two architectures.
+stage_dsym() {
+    local identifier=$1
+    local build_dir=$2
+    local extra_build_dir=$3
+    local dsym="${OUTPUT_DIR}/WebRTC-${identifier}.dSYM"
+    local dwarf="Contents/Resources/DWARF/WebRTC"
+    local relocations="Contents/Resources/Relocations"
+
+    rm -rf "${dsym}"
+    cp -r "${OUTPUT_DIR}/${build_dir}/WebRTC.dSYM" "${dsym}" || exit 1
+
+    if [ ! -z "${extra_build_dir}" ]; then
+        cp -r "${OUTPUT_DIR}/${extra_build_dir}/WebRTC.dSYM/${relocations}/" "${dsym}/${relocations}/"
+        lipo -create -output "${dsym}/${dwarf}" \
+            "${OUTPUT_DIR}/${build_dir}/WebRTC.dSYM/${dwarf}" \
+            "${OUTPUT_DIR}/${extra_build_dir}/WebRTC.dSYM/${dwarf}" || exit 1
+    fi
+}
+
 # Step 1: Download and install depot tools
 if [ ! -d depot_tools ]; then
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -125,21 +158,28 @@ else
 fi
 export PATH=$(pwd)/depot_tools:$PATH
 
+# Bootstrap depot_tools before running any of its tools.
+ensure_bootstrap || exit 1
+
 # Step 2 - Download and build WebRTC
 if [ ! -d src ]; then
-    fetch --nohooks webrtc_ios
+    fetch --nohooks webrtc_ios || exit 1
 fi
 cd src
-git stash
-git fetch --all
-git checkout $BRANCH
+#git stash
+git fetch --all || exit 1
+git checkout $BRANCH || exit 1
 for filename in ../patches/*.patch; do
     echo "Applying patch $filename..."
     git apply $filename
 done
 
 cd ..
-gclient sync --with_branch_heads --with_tags
+gclient sync --with_branch_heads --with_tags || exit 1
+
+# Step 2.5 - Temp patch for macOS arm64 builds
+# bash "${ROOT_DIR}/scripts/patches/disable_apple_linker.sh" "${ROOT_DIR}/src/build/toolchain/apple/toolchain.gni" || exit 1
+
 cd src
 
 # Step 3 - Compile and build all frameworks
@@ -187,18 +227,20 @@ if [[ "$IOS" = true ]]; then
     IOS_LIB_IDENTIFIER="ios-arm64"
     IOS_SIM_LIB_IDENTIFIER="ios-x86_64_arm64-simulator"
 
-    mkdir "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    mkdir "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    mkdir -p "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    mkdir -p "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
     LIB_IOS_INDEX=0
     LIB_IOS_SIMULATOR_INDEX=1
     plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
     plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
-    cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    cp -r "${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    stage_dsym "${IOS_LIB_IDENTIFIER}" "ios-arm64-device"
+    stage_dsym "${IOS_SIM_LIB_IDENTIFIER}" "ios-x64-simulator" "ios-arm64-simulator"
 
-    LIPO_IOS_FLAGS="out/ios-arm64-device/WebRTC.framework/WebRTC"
-    LIPO_IOS_SIM_FLAGS="out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
+    LIPO_IOS_FLAGS="${OUTPUT_DIR}/ios-arm64-device/WebRTC.framework/WebRTC"
+    LIPO_IOS_SIM_FLAGS="${OUTPUT_DIR}/ios-x64-simulator/WebRTC.framework/WebRTC ${OUTPUT_DIR}/ios-arm64-simulator/WebRTC.framework/WebRTC"
 
     plist_add_architecture $LIB_IOS_INDEX "arm64"
     plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "arm64"
@@ -257,8 +299,18 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
-    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
+    cp -RP "${OUTPUT_DIR}/macos-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+    stage_dsym "${MAC_LIB_IDENTIFIER}" "macos-x64" "macos-arm64"
+
+    # The generated macOS framework bundle contains only the umbrella header:
+    # since M141 the other public headers are left behind in the intermediate
+    # gen/ directory and never staged into the bundle, which makes the
+    # framework unusable (https://github.com/stasel/WebRTC/issues/132).
+    # Copy them in until this is fixed upstream.
+    cp "${OUTPUT_DIR}/macos-x64/gen/sdk/WebRTC.framework/Headers/"*.h "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/Headers/" || exit 1
+    fix_privacy_manifest "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework"
+
+    lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/macos-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/macos-arm64/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -272,8 +324,11 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
-    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
+    cp -RP "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    stage_dsym "${CATALYST_LIB_IDENTIFIER}" "catalyst-x64" "catalyst-arm64"
+
+    fix_privacy_manifest "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework"
+    lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC"
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -281,15 +336,18 @@ fi
 cp LICENSE ${XCFRAMEWORK_DIR}
 
 # Step 7 - archive the framework
-cd out
+cd "${OUTPUT_DIR}"
 NOW=$(date -u +"%Y-%m-%dT%H-%M-%S")
 OUTPUT_NAME=WebRTC-$NOW.xcframework.zip
-zip --symlinks -r $OUTPUT_NAME WebRTC.xcframework/
+zip --symlinks -rq $OUTPUT_NAME WebRTC.xcframework/
 
-# Step 8 calculate SHA256 checksum
+# Step 8 - archive the dSYM files
+DSYM_OUTPUT_NAME=WebRTC-$NOW-dSYM.zip
+zip -rmq $DSYM_OUTPUT_NAME WebRTC-*.dSYM
+
+# Step 9 - calculate SHA256 checksum
 CHECKSUM=$(shasum -a 256 $OUTPUT_NAME | awk '{ print $1 }')
-COMMIT_HASH=$(git rev-parse HEAD)
+COMMIT_HASH=$(git -C ${ROOT_DIR}/src rev-parse HEAD)
 
-echo "{ \"file\": \"${OUTPUT_NAME}\", \"checksum\": \"${CHECKSUM}\", \"commit\": \"${COMMIT_HASH}\", \"branch\": \"${BRANCH}\" }" > metadata.json
+echo "{ \"file\": \"${OUTPUT_NAME}\", \"checksum\": \"${CHECKSUM}\", \"commit\": \"${COMMIT_HASH}\", \"branch\": \"${BRANCH}\", \"dsym\": \"${DSYM_OUTPUT_NAME}\" }" > metadata.json
 cat metadata.json
-

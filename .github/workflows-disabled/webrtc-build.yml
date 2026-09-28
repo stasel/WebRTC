@@ -1,25 +1,29 @@
 name: WebRTC Manual Build
 run-name: WebRTC Manual Build
+
+env:
+  XCODE_VERSION: 26.5
+
 on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'webRTC branch head. Ex: branch-heads/6167'
+        description: "webRTC branch head. Ex: branch-heads/6167"
         required: true
         default: "branch-heads/0000"
         type: string
       ios:
-        description: 'Build iOS libraries'
+        description: "Build iOS libraries"
         required: true
         default: true
         type: boolean
       macos:
-        description: 'Build macOS libraries'
+        description: "Build macOS libraries"
         required: true
         default: true
         type: boolean
       maccatalyst:
-        description: 'Build macOS Catalyst libraries'
+        description: "Build macOS Catalyst libraries"
         required: true
         default: true
         type: boolean
@@ -30,19 +34,27 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
+      # WebRTC milestone branches ship with frozen Chromium buildtools that
+      # only support the Xcode/SDK version current at the time of the branch
+      # cut. Newer Xcode versions introduce SDK framework splits (e.g.
+      # DarwinFoundation, UIUtilities) that break the build. Pin to the
+      # version expected by the buildtools (see build/mac_toolchain.py in
+      # the WebRTC source for each milestone).
+      - name: Setup Xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
       - name: Building WebRTC framework
         run: |
-          sh clean.sh
+          sh scripts/clean.sh
           sh scripts/build.sh
         env:
           BRANCH: ${{ inputs.branch }}
           IOS: ${{ inputs.ios }}
           MACOS: ${{ inputs.macos }}
           MAC_CATALYST: ${{ inputs.maccatalyst }}
-          BUILD_VP9: true
       - name: Upload framework
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: WebRTC.xcframework
-          path: src/out/WebRTC.xcframework
+          path: out/WebRTC-*.xcframework.zip
