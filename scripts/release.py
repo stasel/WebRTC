@@ -101,24 +101,41 @@ def currentMilestoneFromMetadata():
     print("❌ No GitHub releases or local metadata versions were found")
     os._exit(os.EX_SOFTWARE)
 
-def currentMilestoneFromGitHubReleases():
-    try:
+def githubReleases():
+    page = 1
+    releases = []
+    while True:
         response = requests.get(
             f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+            params={"per_page": 100, "page": page},
             headers=githubHeaders()
         )
-        response.raise_for_status()
-        releases = response.json()
-    except requests.RequestException as e:
+        if not response.ok:
+            print(
+                f"Warning: failed listing releases: "
+                f"{response.status_code} {response.text}"
+            )
+            return None
+
+        pageReleases = response.json()
+        if not isinstance(pageReleases, list):
+            print(f"Warning: unexpected GitHub releases response: {pageReleases}")
+            return None
+
+        if not pageReleases:
+            return releases
+
+        releases.extend(pageReleases)
+        page += 1
+
+def currentMilestoneFromGitHubReleases():
+    releases = githubReleases()
+    if releases is None:
         print(
-            f"Warning: failed to fetch GitHub releases for {GITHUB_REPO}: "
-            f"{e}; using repository metadata instead"
+            f"Warning: failed to fetch GitHub releases for {GITHUB_REPO}; "
+            "using repository metadata instead"
         )
         return currentMilestoneFromMetadata()
-
-    if not isinstance(releases, list):
-        print(f"❌ Unexpected GitHub releases response: {releases}")
-        os._exit(os.EX_SOFTWARE)
 
     publishedReleases = [
         release for release in releases
@@ -280,30 +297,14 @@ def newestRelease(releases):
     return releases[0]
 
 def releasesByTag(tag_name):
-    page = 1
-    matchingReleases = []
-    while True:
-        response = requests.get(
-            f"https://api.github.com/repos/{GITHUB_REPO}/releases",
-            params={"per_page": 100, "page": page},
-            headers=githubHeaders()
-        )
-        if not response.ok:
-            print(
-                f"Warning: failed listing releases: "
-                f"{response.status_code} {response.text}"
-            )
-            return None
+    releases = githubReleases()
+    if releases is None:
+        return None
 
-        releases = response.json()
-        if not releases:
-            break
-
-        for release in releases:
-            if release.get("tag_name") == tag_name:
-                matchingReleases.append(release)
-
-        page += 1
+    matchingReleases = [
+        release for release in releases
+        if release.get("tag_name") == tag_name
+    ]
 
     if len(matchingReleases) > 1:
         print(
