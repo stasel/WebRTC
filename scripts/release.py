@@ -221,6 +221,13 @@ def createReleaseDraft(release, buildMetadata):
     }
 
     matchingReleases = releasesByTag(tag_name)
+    if matchingReleases is None:
+        print(
+            f"❌ Failed checking existing releases for {tag_name}; "
+            "refusing to create a duplicate release"
+        )
+        return {}
+
     publishedReleases = [
         release for release in matchingReleases
         if not release.get("draft")
