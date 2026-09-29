@@ -454,15 +454,13 @@ def prepareReleaseBranchLease(branch):
 
 def pushReleaseBranch(branch, expectedRemoteHead):
     refspec = f"{branch}:refs/heads/{branch}"
-    if expectedRemoteHead:
-        runGit([
-            "push",
-            f"--force-with-lease=refs/heads/{branch}:{expectedRemoteHead}",
-            "origin",
-            refspec
-        ])
-    else:
-        runGit(["push", "origin", refspec])
+    expectedRemoteHead = expectedRemoteHead or ''
+    runGit([
+        "push",
+        f"--force-with-lease=refs/heads/{branch}:{expectedRemoteHead}",
+        "origin",
+        refspec
+    ])
 
 def commitReleaseMetadata(version):
     runGit(["add", "Package.swift", "WebRTC-lib.podspec", "README.md", "WebRTC.json"])
