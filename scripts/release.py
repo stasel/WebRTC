@@ -105,11 +105,16 @@ def githubReleases():
     page = 1
     releases = []
     while True:
-        response = requests.get(
-            f"https://api.github.com/repos/{GITHUB_REPO}/releases",
-            params={"per_page": 100, "page": page},
-            headers=githubHeaders()
-        )
+        try:
+            response = requests.get(
+                f"https://api.github.com/repos/{GITHUB_REPO}/releases",
+                params={"per_page": 100, "page": page},
+                headers=githubHeaders()
+            )
+        except requests.RequestException as e:
+            print(f"Warning: failed listing releases: {e}")
+            return None
+
         if not response.ok:
             print(
                 f"Warning: failed listing releases: "
@@ -117,7 +122,12 @@ def githubReleases():
             )
             return None
 
-        pageReleases = response.json()
+        try:
+            pageReleases = response.json()
+        except (ValueError, TypeError) as e:
+            print(f"Warning: failed decoding releases response: {e}")
+            return None
+
         if not isinstance(pageReleases, list):
             print(f"Warning: unexpected GitHub releases response: {pageReleases}")
             return None
