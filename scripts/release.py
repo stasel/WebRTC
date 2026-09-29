@@ -421,19 +421,48 @@ def pullRequestForBranch(head):
 def runGit(args):
     subprocess.run(["git", *args], check=True)
 
-def remoteBranchExists(branch):
-    return subprocess.run(
+def remoteBranchHead(branch):
+    result = subprocess.run(
         ["git", "ls-remote", "--exit-code", "--heads", "origin", branch],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    ).returncode == 0
+        text=True,
+        capture_output=True,
+        check=False
+    )
 
-def pushReleaseBranch(branch):
-    if remoteBranchExists(branch):
+    if result.returncode == 2:
+        return None
+
+    if result.returncode != 0:
+        print(
+            f"❌ Failed checking remote branch {branch}: "
+            f"{result.stderr.strip()}"
+        )
+        os._exit(os.EX_SOFTWARE)
+
+    refs = result.stdout.strip().splitlines()
+    if not refs:
+        return None
+
+    return refs[0].split()[0]
+
+def prepareReleaseBranchLease(branch):
+    remoteHead = remoteBranchHead(branch)
+    if remoteHead:
         runGit(["fetch", "origin", f"{branch}:refs/remotes/origin/{branch}"])
-        runGit(["push", "--force-with-lease", "origin", branch])
+
+    return remoteHead
+
+def pushReleaseBranch(branch, expectedRemoteHead):
+    refspec = f"{branch}:refs/heads/{branch}"
+    if expectedRemoteHead:
+        runGit([
+            "push",
+            f"--force-with-lease=refs/heads/{branch}:{expectedRemoteHead}",
+            "origin",
+            refspec
+        ])
     else:
-        runGit(["push", "origin", branch])
+        runGit(["push", "origin", refspec])
 
 def commitReleaseMetadata(version):
     runGit(["add", "Package.swift", "WebRTC-lib.podspec", "README.md", "WebRTC.json"])
@@ -480,6 +509,8 @@ if __name__ == "__main__":
 
     print(f"✅ {nextRelease}\n")
     print("✅ New Version is available to build")
+    releaseBranch = f'release-M{nextRelease.version}'
+    releaseBranchHead = prepareReleaseBranchLease(releaseBranch)
 
     # Build WebRTC Frameworks
     print("➡️ Building WebRTC Library...")
@@ -524,7 +555,6 @@ if __name__ == "__main__":
 
     # Create new branch with code changes
     print("➡️ Creating local branch...")
-    releaseBranch = f'release-M{nextRelease.version}'
     configureGitAuthor()
     checkoutReleaseBranch(releaseBranch)
 
@@ -571,7 +601,7 @@ if __name__ == "__main__":
     # Commit and push
     print("➡️ Committing and pushing code to remote...")
     commitReleaseMetadata(nextRelease.version)
-    pushReleaseBranch(releaseBranch)
+    pushReleaseBranch(releaseBranch, releaseBranchHead)
 
     # Create PR
     print("➡️ Creating pull request...")
