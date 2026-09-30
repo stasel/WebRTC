@@ -11,8 +11,8 @@ Pod::Spec.new do |spec|
   spec.homepage     = "https://github.com/stasel/WebRTC"
   spec.license      = { :type => 'BSD', :file => 'WebRTC.xcframework/LICENSE' }
   spec.author       = "Stasel"
-  spec.ios.deployment_target = '12.0'
-  spec.osx.deployment_target = '10.11'
+  spec.ios.deployment_target = '15.0'
+  spec.osx.deployment_target = '12.0'
 
   spec.source       = { :http => "https://github.com/stasel/WebRTC/releases/download/154.0.0/WebRTC-M154.xcframework.zip" }
   spec.vendored_frameworks = "WebRTC.xcframework"

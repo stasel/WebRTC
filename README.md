@@ -23,8 +23,8 @@ The binary releases correspond with official Chromium releases and branches as s
 * dSYM files are included in case you need them. You can download them from the [releases page](https://github.com/stasel/WebRTC/releases). *(Available from version M152).*
 
 ## 📢 Requirements
-* iOS 12+
-* macOS 10.11+
+* iOS 15+
+* macOS 12+
 * macOS Catalyst 11.0+
 
 ## 📀 Binaries included
