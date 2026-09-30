@@ -18,6 +18,7 @@ The binary releases correspond with official Chromium releases and branches as s
 * No modifications are made to the source code or the output binaries.
 * The build process is open source using GitHub actions.
 * Dynamic framework (xcframework format) which contains multiple binaries for macOS and iOS.
+* The build workflow can optionally add visionOS device and arm64 simulator slices.
 * Added support for extra encodings: VP9, H264 and AV1.
 * H.265 / HEVC: the SDP negotiation and RTP packetization layer is compiled but WebRTC ships no HEVC encoder or decoder for Apple platforms.
 * dSYM files are included in case you need them. You can download them from the [releases page](https://github.com/stasel/WebRTC/releases). *(Available from version M152).*
@@ -103,6 +104,10 @@ If you wish to compile your own WebRTC binary framework, please refer to the fol
 https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/ios/README.md
 
 You can also take a look at the [build script](scripts/build.sh) I created for more details.
+
+To include visionOS slices in a custom XCFramework build, enable the
+`VISIONOS=true` environment option. Package manager declarations should be
+updated only after a release archive with those slices is published.
 
 ## 📃 Licenses
 * Build scripts (this repository): `BSD 3-Clause License`

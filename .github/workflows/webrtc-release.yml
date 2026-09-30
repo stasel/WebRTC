@@ -40,3 +40,5 @@ jobs:
         run: |
           sh scripts/clean.sh
           python -u scripts/release.py
+        env:
+          VISIONOS: true
