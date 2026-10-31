@@ -1,0 +1,122 @@
+diff --git a/build/config/apple/codesign.py b/build/config/apple/codesign.py
+index 3f0559478..cd2fede3a 100644
+--- a/build/config/apple/codesign.py
++++ b/build/config/apple/codesign.py
+@@ -131,7 +131,8 @@ class Bundle(object):
+ 
+   @staticmethod
+   def Kind(platform, extension):
+-    if platform in ('iphoneos', 'iphonesimulator'):
++    if platform in (
++        'iphoneos', 'iphonesimulator', 'xros', 'xrsimulator'):
+       return 'ios'
+     if platform == 'macosx':
+       if extension == '.framework':
+diff --git a/build/config/apple/sdk_info.py b/build/config/apple/sdk_info.py
+index 88f9cd680..298a1cd28 100755
+--- a/build/config/apple/sdk_info.py
++++ b/build/config/apple/sdk_info.py
+@@ -143,6 +143,8 @@ def main():
+                           'macosx',
+                           'watchos',
+                           'watchsimulator',
++                          'xros',
++                          'xrsimulator',
+                       ])
+   args = parser.parse_args()
+   if args.developer_dir:
+diff --git a/build/config/clang/BUILD.gn b/build/config/clang/BUILD.gn
+index e05032c0c..13bed50aa 100644
+--- a/build/config/clang/BUILD.gn
++++ b/build/config/clang/BUILD.gn
+@@ -261,6 +261,11 @@ clang_lib("compiler_builtins") {
+       } else {
+         assert(false, "unsupported target_environment=$target_environment")
+       }
++    } else if (target_platform == "xros") {
++      # Chromium's prebuilt Clang toolchain does not currently ship xros
++      # compiler-rt archives. Do not add an explicit compiler_builtins
++      # library; Apple platforms can resolve compiler runtime support via the
++      # active Xcode toolchain during the final framework link.
+     } else {
+       assert(false, "unsupported target_platform=$target_platform")
+     }
+diff --git a/build/config/ios/BUILD.gn b/build/config/ios/BUILD.gn
+index 63f26f15c..d91d10cf5 100644
+--- a/build/config/ios/BUILD.gn
++++ b/build/config/ios/BUILD.gn
+@@ -45,6 +45,8 @@ config("compiler") {
+     triplet_os = "apple-ios"
+   } else if (target_platform == "tvos") {
+     triplet_os = "apple-tvos"
++  } else if (target_platform == "xros") {
++    triplet_os = "apple-xros"
+   }
+ 
+   # Set target.
+diff --git a/build/config/ios/ios_sdk.gni b/build/config/ios/ios_sdk.gni
+index bf71f6f8c..f2cf641f8 100644
+--- a/build/config/ios/ios_sdk.gni
++++ b/build/config/ios/ios_sdk.gni
+@@ -94,6 +94,16 @@ if (ios_sdk_path == "") {
+     } else {
+       assert(false, "unsupported target_environment=$target_environment")
+     }
++  } else if (target_platform == "xros") {
++    if (target_environment == "simulator") {
++      ios_sdk_name = "xrsimulator"
++      ios_sdk_platform = "XRSimulator"
++    } else if (target_environment == "device") {
++      ios_sdk_name = "xros"
++      ios_sdk_platform = "XROS"
++    } else {
++      assert(false, "unsupported target_environment=$target_environment")
++    }
+   } else {
+     assert(false, "unsupported target_platform=$target_platform")
+   }
+diff --git a/build/config/ios/rules.gni b/build/config/ios/rules.gni
+index 0177d5702..234815e1c 100644
+--- a/build/config/ios/rules.gni
++++ b/build/config/ios/rules.gni
+@@ -138,6 +138,8 @@ template("ios_info_plist") {
+       _build_info_plist = "//build/config/ios/BuildInfo.plist"
+     } else if (target_platform == "tvos") {
+       _build_info_plist = "//build/config/tvos/BuildInfo.plist"
++    } else if (target_platform == "xros") {
++      _build_info_plist = "//build/config/ios/BuildInfo.plist"
+     }
+     plist_templates = [
+       _build_info_plist,
+diff --git a/build/config/rust.gni b/build/config/rust.gni
+index a55e7c58b..8e655fd01 100644
+--- a/build/config/rust.gni
++++ b/build/config/rust.gni
+@@ -307,6 +307,14 @@ if (is_linux || is_chromeos) {
+       } else {
+         assert(false, "unsupported target_environment=$target_environment")
+       }
++    } else if (target_platform == "xros") {
++      if (target_environment == "simulator") {
++        rust_abi_target = "aarch64-apple-visionos-sim"
++      } else if (target_environment == "device") {
++        rust_abi_target = "aarch64-apple-visionos"
++      } else {
++        assert(false, "unsupported target_environment=$target_environment")
++      }
+     } else {
+       assert(false, "unsupported target_platform=$target_platform")
+     }
+diff --git a/build/rust/known-target-triples.txt b/build/rust/known-target-triples.txt
+index fc4780bf6..cecd3882b 100644
+--- a/build/rust/known-target-triples.txt
++++ b/build/rust/known-target-triples.txt
+@@ -13,6 +13,8 @@ aarch64-apple-ios-macabi
+ aarch64-apple-ios-sim
+ aarch64-apple-tvos
+ aarch64-apple-tvos-sim
++aarch64-apple-visionos
++aarch64-apple-visionos-sim
+ aarch64-linux-android
+ aarch64-pc-windows-msvc
+ aarch64-unknown-fuchsia
