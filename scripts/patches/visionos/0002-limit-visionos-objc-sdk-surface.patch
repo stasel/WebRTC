@@ -1,0 +1,129 @@
+diff --git a/sdk/BUILD.gn b/sdk/BUILD.gn
+index 5252eb9..25ed048 100644
+--- a/sdk/BUILD.gn
++++ b/sdk/BUILD.gn
+@@ -162,7 +162,7 @@ if (is_ios || is_mac) {
+         "objc/helpers/UIDevice+RTCDevice.mm",
+       ]
+ 
+-      if (target_platform != "tvos") {
++      if (target_platform != "tvos" && target_platform != "xros") {
+         sources += [
+           "objc/helpers/RTCCameraPreviewView.h",
+           "objc/helpers/RTCCameraPreviewView.m",
+@@ -638,7 +638,7 @@ if (is_ios || is_mac) {
+         "Metal.framework",
+         "MetalKit.framework",
+       ]
+-      if (is_ios) {
++      if (is_ios && target_platform != "xros") {
+         sources += [
+           "objc/components/renderer/metal/RTCMTLVideoView.h",
+           "objc/components/renderer/metal/RTCMTLVideoView.m",
+@@ -1335,12 +1335,7 @@ if (is_ios || is_mac) {
+           "objc/components/audio/RTCAudioDevice.h",
+           "objc/components/audio/RTCAudioSession.h",
+           "objc/components/audio/RTCAudioSessionConfiguration.h",
+-          "objc/components/capturer/RTCCameraVideoCapturer.h",
+-          "objc/components/capturer/RTCFileVideoCapturer.h",
+           "objc/components/network/RTCNetworkMonitor.h",
+-          "objc/components/renderer/metal/RTCMTLVideoView.h",
+-          "objc/components/renderer/opengl/RTCEAGLVideoView.h",
+-          "objc/components/renderer/opengl/RTCVideoViewShading.h",
+           "objc/components/video_codec/RTCCodecSpecificInfoH264.h",
+           "objc/components/video_codec/RTCDefaultVideoDecoderFactory.h",
+           "objc/components/video_codec/RTCDefaultVideoEncoderFactory.h",
+@@ -1350,7 +1345,6 @@ if (is_ios || is_mac) {
+           "objc/components/video_codec/RTCVideoEncoderFactoryH264.h",
+           "objc/components/video_codec/RTCVideoEncoderH264.h",
+           "objc/components/video_frame_buffer/RTCCVPixelBuffer.h",
+-          "objc/helpers/RTCCameraPreviewView.h",
+           "objc/helpers/RTCDispatcher.h",
+           "objc/helpers/UIDevice+RTCDevice.h",
+           "objc/api/peerconnection/RTCAudioSource.h",
+@@ -1404,6 +1398,17 @@ if (is_ios || is_mac) {
+           "objc/api/video_frame_buffer/RTCNativeMutableI420Buffer.h",
+         ]
+ 
++        if (target_platform != "xros") {
++          common_objc_headers += [
++            "objc/components/capturer/RTCCameraVideoCapturer.h",
++            "objc/components/capturer/RTCFileVideoCapturer.h",
++            "objc/components/renderer/metal/RTCMTLVideoView.h",
++            "objc/components/renderer/opengl/RTCEAGLVideoView.h",
++            "objc/components/renderer/opengl/RTCVideoViewShading.h",
++            "objc/helpers/RTCCameraPreviewView.h",
++          ]
++        }
++
+         if (!build_with_chromium) {
+           common_objc_headers += [
+             "objc/api/logging/RTCCallbackLogger.h",
+@@ -1423,15 +1428,19 @@ if (is_ios || is_mac) {
+         deps = [
+           ":audio_objc",
+           ":base_objc",
+-          ":default_codec_factory_objc",
+-          ":metal_objc",
+           ":native_api",
+           ":native_video",
+           ":peerconnectionfactory_base_objc",
+-          ":videocapture_objc",
+           ":videocodec_objc",
+-          ":videotoolbox_objc",
+         ]
++        if (target_platform != "xros") {
++          deps += [
++            ":default_codec_factory_objc",
++            ":metal_objc",
++            ":videocapture_objc",
++            ":videotoolbox_objc",
++          ]
++        }
+         if (!build_with_chromium) {
+           deps += [
+             ":callback_logger_objc",
+diff --git a/sdk/objc/components/audio/RTCAudioSessionConfiguration.m b/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
+index c583868..3473ea0 100644
+--- a/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
++++ b/sdk/objc/components/audio/RTCAudioSessionConfiguration.m
+@@ -60,7 +60,8 @@ static RTC_OBJC_TYPE(RTCAudioSessionConfiguration) *gWebRTCConfiguration = nil;
+     // nonmixable, hence activating the session will interrupt any other
+     // audio sessions which are also nonmixable.
+     _category = AVAudioSessionCategoryPlayAndRecord;
+-#if defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0
++#if defined(__VISION_OS_VERSION_MAX_ALLOWED) || \
++    (defined(__IPHONE_26_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_26_0)
+     _categoryOptions = AVAudioSessionCategoryOptionAllowBluetoothHFP;
+ #else
+     // Use the deprecated option on older SDKs.
+diff --git a/sdk/objc/components/video_codec/RTCVideoDecoderH264.mm b/sdk/objc/components/video_codec/RTCVideoDecoderH264.mm
+index 7b68164..3f9cb4e 100644
+--- a/sdk/objc/components/video_codec/RTCVideoDecoderH264.mm
++++ b/sdk/objc/components/video_codec/RTCVideoDecoderH264.mm
+@@ -221,7 +221,9 @@ void decompressionOutputCallback(void *decoderRef,
+   // TODO(tkchin): Maybe only set OpenGL/IOSurface keys if we know that that
+   // we can pass CVPixelBuffers as native handles in decoder output.
+   NSDictionary *attributes = @{
+-#if defined(WEBRTC_IOS) && (TARGET_OS_MACCATALYST || TARGET_OS_SIMULATOR)
++#if defined(WEBRTC_IOS) && \
++    (TARGET_OS_MACCATALYST || TARGET_OS_SIMULATOR || \
++     defined(__VISION_OS_VERSION_MAX_ALLOWED))
+     (NSString *)kCVPixelBufferMetalCompatibilityKey : @(YES),
+ #elif defined(WEBRTC_IOS)
+     (NSString *)kCVPixelBufferOpenGLESCompatibilityKey : @(YES),
+diff --git a/sdk/objc/components/video_codec/RTCVideoEncoderH264.mm b/sdk/objc/components/video_codec/RTCVideoEncoderH264.mm
+index 716355f..060c6ad 100644
+--- a/sdk/objc/components/video_codec/RTCVideoEncoderH264.mm
++++ b/sdk/objc/components/video_codec/RTCVideoEncoderH264.mm
+@@ -664,7 +664,9 @@ NSUInteger GetMaxSampleRate(
+   // Set source image buffer attributes. These attributes will be present on
+   // buffers retrieved from the encoder's pixel buffer pool.
+   NSDictionary *sourceAttributes = @{
+-#if defined(WEBRTC_IOS) && (TARGET_OS_MACCATALYST || TARGET_OS_SIMULATOR)
++#if defined(WEBRTC_IOS) && \
++    (TARGET_OS_MACCATALYST || TARGET_OS_SIMULATOR || \
++     defined(__VISION_OS_VERSION_MAX_ALLOWED))
+     (NSString *)kCVPixelBufferMetalCompatibilityKey : @(YES),
+ #elif defined(WEBRTC_IOS)
+     (NSString *)kCVPixelBufferOpenGLESCompatibilityKey : @(YES),

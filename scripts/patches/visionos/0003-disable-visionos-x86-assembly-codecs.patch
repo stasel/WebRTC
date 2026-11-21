@@ -1,0 +1,71 @@
+diff --git a/third_party/dav1d/BUILD.gn b/third_party/dav1d/BUILD.gn
+index d75d8237133..72f618857d7 100644
+--- a/third_party/dav1d/BUILD.gn
++++ b/third_party/dav1d/BUILD.gn
+@@ -9,7 +9,7 @@ import("//build/config/sanitizers/sanitizers.gni")
+ import("//third_party/nasm/nasm_assemble.gni")
+ 
+ # MemorySanitizer can't handle assembly, https://crbug.com/928357.
+-enable_nasm = (current_cpu == "x86" || current_cpu == "x64") && !is_msan
++enable_nasm = (current_cpu == "x86" || current_cpu == "x64") && !is_msan && target_platform != "xros"
+ 
+ if (is_win) {
+   platform_config_root = "config/win/$current_cpu"
+diff --git a/third_party/libaom/BUILD.gn b/third_party/libaom/BUILD.gn
+index d8dbb5b3885..ac2c7b84d67 100644
+--- a/third_party/libaom/BUILD.gn
++++ b/third_party/libaom/BUILD.gn
+@@ -66,7 +66,8 @@ config("libaom_public_config") {
+   ]
+ }
+ 
+-if (current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) {
++if ((current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) &&
++    target_platform != "xros") {
+   nasm_assemble("libaom_nasm") {
+     sources = aom_dsp_common_asm_sse2
+     sources += aom_dsp_common_asm_ssse3
+@@ -327,7 +328,8 @@ static_library("libaom") {
+     defines += [ "DO_RANGE_CHECK_CLAMP=1" ]
+   }
+   deps = []
+-  if (current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) {
++  if ((current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) &&
++    target_platform != "xros") {
+     deps += [
+       ":libaom_intrinsics_avx",
+       ":libaom_intrinsics_avx2",
+diff --git a/third_party/libvpx/BUILD.gn b/third_party/libvpx/BUILD.gn
+index 9d77f0a9e25..00014c68bae 100644
+--- a/third_party/libvpx/BUILD.gn
++++ b/third_party/libvpx/BUILD.gn
+@@ -141,7 +141,8 @@ executable("decode_encode_profile_test") {
+   ]
+ }
+ 
+-if (current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) {
++if ((current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) &&
++    target_platform != "xros") {
+   nasm_assemble("libvpx_asm") {
+     if (current_cpu == "x86") {
+       sources = libvpx_srcs_x86_assembly
+@@ -164,7 +165,8 @@ if (current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) {
+   }
+ }
+ 
+-if (current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) {
++if ((current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) &&
++    target_platform != "xros") {
+   # The following targets are deliberately source_set rather than
+   # static_library. The :libvpx target exposes these intrinsic implementations
+   # via global function pointer symbols, which hides the object dependency at
+@@ -549,7 +551,8 @@ static_library("libvpx") {
+   configs += [ "//build/config/compiler:no_chromium_code" ]
+   configs += [ ":libvpx_config" ]
+   deps = []
+-  if (current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) {
++  if ((current_cpu == "x86" || (current_cpu == "x64" && !is_msan)) &&
++    target_platform != "xros") {
+     deps += [
+       ":libvpx_asm",
+       ":libvpx_intrinsics_avx",

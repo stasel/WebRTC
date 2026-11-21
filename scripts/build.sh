@@ -4,7 +4,8 @@
 ## Created by Stasel
 ## BSD-3 License
 ## 
-## Example usage (from the repository root): BRANCH=branch-heads/7727 MACOS=true IOS=true sh scripts/build.sh
+## Example usage (from the repository root):
+## BRANCH=branch-heads/7727 MACOS=true IOS=true VISIONOS=true sh scripts/build.sh
 
 # Configs
 DEBUG="${DEBUG:-false}"
@@ -12,11 +13,12 @@ BRANCH="${BRANCH:-main}"
 IOS="${IOS:-false}"
 MACOS="${MACOS:-false}"
 MAC_CATALYST="${MAC_CATALYST:-false}"
+VISIONOS="${VISIONOS:-false}"
 
 ROOT_DIR="$(pwd)"
 OUTPUT_DIR="${ROOT_DIR}/out"
 XCFRAMEWORK_DIR="${OUTPUT_DIR}/WebRTC.xcframework"
-COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=true is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=true use_lld=true rtc_ios_use_opengl_rendering=true rtc_system_openh264=true rtc_use_h265=true"
+COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=true is_component_build=false rtc_include_tests=false rtc_build_examples=false rtc_build_tools=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=true use_lld=true rtc_system_openh264=true rtc_use_h265=true"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
 
 
@@ -24,7 +26,7 @@ build_iOS() {
     local arch=$1
     local environment=$2
     local gen_dir="${OUTPUT_DIR}/ios-${arch}-${environment}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"12.0\" ios_enable_code_signing=false"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"12.0\" ios_enable_code_signing=false rtc_ios_use_opengl_rendering=true"
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
@@ -45,7 +47,37 @@ build_macOS() {
 build_catalyst() {
     local arch=$1
     local gen_dir="${OUTPUT_DIR}/catalyst-${arch}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false use_lld=false"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_environment=\"catalyst\" target_os=\"ios\" ios_deployment_target=\"14.0\" ios_enable_code_signing=false use_lld=false rtc_ios_use_opengl_rendering=true"
+    gn gen "${gen_dir}" --args="${gen_args}"
+    gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
+    ninja -C "${gen_dir}" framework_objc || exit 1
+}
+
+build_visionOS() {
+    local arch=$1
+    local environment=$2
+    local gen_dir
+
+    if [ "${environment}" = "simulator" ]; then
+        gen_dir="${OUTPUT_DIR}/visionos-${arch}-simulator"
+    else
+        gen_dir="${OUTPUT_DIR}/visionos-arm64-device"
+    fi
+
+    local gen_args="${COMMON_GN_ARGS}"
+    gen_args="${gen_args} target_cpu=\"${arch}\" target_os=\"ios\""
+    gen_args="${gen_args} target_environment=\"${environment}\""
+    gen_args="${gen_args} target_platform=\"xros\" xros=true"
+    gen_args="${gen_args} ios_deployment_target=\"2.0\""
+    gen_args="${gen_args} ios_enable_code_signing=false"
+    gen_args="${gen_args} rtc_ios_use_opengl_rendering=false"
+    gen_args="${gen_args} rtc_build_libvpx=false"
+    gen_args="${gen_args} rtc_libvpx_build_vp9=false"
+    gen_args="${gen_args} enable_libaom=false"
+    gen_args="${gen_args} rtc_include_dav1d_in_internal_decoder_factory=false"
+    gen_args="${gen_args} rtc_use_h264=false rtc_use_h265=false"
+    gen_args="${gen_args} use_custom_libcxx=false"
+    gen_args="${gen_args} clang_use_chrome_plugins=false use_lld=false"
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
@@ -79,6 +111,51 @@ fix_privacy_manifest() {
         mv "${nested}/A/Resources/PrivacyInfo.xcprivacy" "${framework}/Versions/A/Resources/" || exit 1
         rm -rf "${nested}"
     fi
+}
+
+fix_visionos_framework_plist() {
+    local framework=$1
+    local platform=$2
+    local sdk_name=$3
+    local info_plist="${framework}/Info.plist"
+
+    if [ ! -f "${info_plist}" ]; then
+        info_plist="${framework}/Versions/A/Resources/Info.plist"
+    fi
+
+    if [ ! -f "${info_plist}" ]; then
+        return
+    fi
+
+    "$PLISTBUDDY_EXEC" \
+        -c "Delete :CFBundleSupportedPlatforms" \
+        "${info_plist}" 2>/dev/null
+    "$PLISTBUDDY_EXEC" -c "Add :CFBundleSupportedPlatforms array" "${info_plist}"
+    "$PLISTBUDDY_EXEC" -c "Add :CFBundleSupportedPlatforms: string ${platform}" "${info_plist}"
+    "$PLISTBUDDY_EXEC" \
+        -c "Set :DTPlatformName ${sdk_name}" \
+        "${info_plist}" 2>/dev/null
+    local sdk_version="$(xcrun --sdk "${sdk_name}" --show-sdk-version)"
+    "$PLISTBUDDY_EXEC" \
+        -c "Set :DTSDKName ${sdk_name}${sdk_version}" \
+        "${info_plist}" 2>/dev/null
+    "$PLISTBUDDY_EXEC" \
+        -c "Set :MinimumOSVersion 2.0" \
+        "${info_plist}" 2>/dev/null
+    "$PLISTBUDDY_EXEC" \
+        -c "Delete :UIDeviceFamily" \
+        "${info_plist}" 2>/dev/null
+    "$PLISTBUDDY_EXEC" -c "Add :UIDeviceFamily array" "${info_plist}"
+    "$PLISTBUDDY_EXEC" -c "Add :UIDeviceFamily: integer 7" "${info_plist}"
+}
+
+apply_visionos_build_config_patches() {
+    [ "$VISIONOS" = true ] || return 0
+
+    for patch_file in "${ROOT_DIR}"/scripts/patches/visionos/*.patch; do
+        [ -f "${patch_file}" ] || continue
+        git -C "${ROOT_DIR}/src" apply --whitespace=nowarn "${patch_file}" || exit 1
+    done
 }
 
 # Stage the dSYM for one XCFramework slice, named after its library identifier.
@@ -124,6 +201,7 @@ git fetch --all || exit 1
 git checkout "$BRANCH" || exit 1
 cd ..
 gclient sync --with_branch_heads --with_tags || exit 1
+apply_visionos_build_config_patches || exit 1
 
 # Step 2.5 - Temp patch for macOS arm64 builds
 # bash "${ROOT_DIR}/scripts/patches/disable_apple_linker.sh" "${ROOT_DIR}/src/build/toolchain/apple/toolchain.gni" || exit 1
@@ -147,6 +225,11 @@ fi
 if [ "$MAC_CATALYST" = true ]; then
     build_catalyst "x64"
     build_catalyst "arm64"
+fi
+
+if [ "$VISIONOS" = true ]; then
+    build_visionOS "arm64" "device"
+    build_visionOS "arm64" "simulator"
 fi
 
 # Step 4 - Manually create XCFramework.
@@ -238,6 +321,43 @@ if [ "$MAC_CATALYST" = true ]; then
 
     fix_privacy_manifest "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework"
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" "${OUTPUT_DIR}/catalyst-x64/WebRTC.framework/WebRTC" "${OUTPUT_DIR}/catalyst-arm64/WebRTC.framework/WebRTC"
+    LIB_COUNT=$((LIB_COUNT+1))
+fi
+
+# Step 5.4 - visionOS libs to XCFramework
+if [ "$VISIONOS" = true ]; then
+
+    VISIONOS_LIB_IDENTIFIER="xros-arm64"
+    VISIONOS_SIM_LIB_IDENTIFIER="xros-arm64-simulator"
+
+    mkdir "${XCFRAMEWORK_DIR}/${VISIONOS_LIB_IDENTIFIER}"
+    mkdir "${XCFRAMEWORK_DIR}/${VISIONOS_SIM_LIB_IDENTIFIER}"
+    plist_add_library $LIB_COUNT "${VISIONOS_LIB_IDENTIFIER}" "xros"
+    plist_add_architecture $LIB_COUNT "arm64"
+    LIB_COUNT=$((LIB_COUNT+1))
+    plist_add_library $LIB_COUNT "${VISIONOS_SIM_LIB_IDENTIFIER}" "xros" "simulator"
+    plist_add_architecture $LIB_COUNT "arm64"
+
+    cp -RP \
+        "${OUTPUT_DIR}/visionos-arm64-device/WebRTC.framework" \
+        "${XCFRAMEWORK_DIR}/${VISIONOS_LIB_IDENTIFIER}"
+    cp -RP \
+        "${OUTPUT_DIR}/visionos-arm64-simulator/WebRTC.framework" \
+        "${XCFRAMEWORK_DIR}/${VISIONOS_SIM_LIB_IDENTIFIER}"
+    stage_dsym "${VISIONOS_LIB_IDENTIFIER}" "visionos-arm64-device"
+    stage_dsym "${VISIONOS_SIM_LIB_IDENTIFIER}" "visionos-arm64-simulator"
+
+    fix_visionos_framework_plist \
+        "${XCFRAMEWORK_DIR}/${VISIONOS_LIB_IDENTIFIER}/WebRTC.framework" \
+        "XROS" \
+        "xros"
+    fix_visionos_framework_plist \
+        "${XCFRAMEWORK_DIR}/${VISIONOS_SIM_LIB_IDENTIFIER}/WebRTC.framework" \
+        "XRSimulator" \
+        "xrsimulator"
+    xcrun codesign -s - \
+        "${XCFRAMEWORK_DIR}/${VISIONOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC"
+
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
